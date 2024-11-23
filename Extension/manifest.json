@@ -1,0 +1,26 @@
+{
+    "manifest_version": 3,
+    "name": "Dropship Assistant",
+    "version": "1.0",
+    "description": "AliExpress to eBay dropshipping assistant",
+    "permissions": [
+      "activeTab",
+      "scripting",
+      "storage",
+      "tabs"
+    ],
+    "host_permissions": [
+      "https://*.aliexpress.com/*",
+      "https://*.ebay.com/*"
+    ],
+    "background": {
+      "service_worker": "background.bundle.js"
+    },
+    "content_scripts": [{
+      "matches": ["https://*.aliexpress.com/*"],
+      "js": ["content.bundle.js"]
+    }],
+    "action": {
+      "default_popup": "popup/popup.html"
+    }
+  }

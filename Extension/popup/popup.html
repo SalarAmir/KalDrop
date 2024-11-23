@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dropship Assistant</title>
+  <style>
+    body { width: 300px; padding: 10px; }
+    .container { display: flex; flex-direction: column; gap: 10px; }
+    .btn { padding: 8px; cursor: pointer; }
+    .profit-info { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="extractBtn" class="btn">Extract Product</button>
+    <div id="profitInfo" class="profit-info" style="display: none;">
+      <div>Cost Price: <span id="costPrice">$0.00</span></div>
+      <div>Selling Price: <span id="sellingPrice">$0.00</span></div>
+      <div>Estimated Profit: <span id="profit">$0.00</span></div>
+    </div>
+    <button id="listBtn" class="btn" disabled>List on eBay</button>
+    <div id="status"></div>
+  </div>
+  <script src="../popup.bundle.js"></script>
+</body>
+</html>
