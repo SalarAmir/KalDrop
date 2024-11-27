@@ -1,3 +1,5 @@
+import { AliExpressScraper } from "./scraper.js";
+
 const scraper = new AliExpressScraper();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
