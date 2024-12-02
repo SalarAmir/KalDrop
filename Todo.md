@@ -1,4 +1,17 @@
 - Extension (Automation + Scrapping)
+    automation side
+
+    scrapping side
+
+    frontend
+        popup with form and confirm button
+    
+    
+    scrapper (content)->popup -> background -> local
+    local -> lister
+
+    background -> server
+
 - Database (Users)
 - Payment (API)
 - Login/Signup (Backend)
