@@ -1,25 +1,25 @@
-class EbayListingAutomator {
+export class EbayListingAutomator {
     constructor(productData) {
-        this.productData = productData;
+      if (!productData) throw new Error('Product data is required to create a listing');
+      this.productData = productData;
     }
-
+  
     async createListing() {
-        // Navigate to eBay's sell page
+      try {
+        console.log('Starting eBay listing process...');
         await this.navigateToSellPage();
-        
-        // Start listing process
         await this.startNewListing();
-        
-        // Fill out listing details
         await this.fillTitle();
         await this.fillDescription();
         await this.uploadImages();
         await this.setCategoryAndCondition();
         await this.setPricing();
         await this.setShippingOptions();
-        
-        // Review and submit
         await this.reviewAndSubmitListing();
+        console.log('eBay listing created successfully!');
+      } catch (error) {
+        console.error('Error creating eBay listing:', error);
+      }
     }
 
     async navigateToSellPage() {
