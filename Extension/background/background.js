@@ -16,23 +16,22 @@ class StorageService {
 			});
 		});
 	}
-}
-
-
+};
 
 
 //communication with extension pages: popup, content
 const actionToServiceMap = {
-	'signup': UserService.signup,
-	'login': UserService.login,
-	'getLoggedInEmail': UserService.getLoggedInEmail,
-	'checkLogin':UserService.checkLogin,
-	'getCart': CartService.get,
-	'addToCart': CartService.addToCart,
-	'removeFromCart': CartService.removeFromCart,
-	'submitOrder': CartService.submitOrder,
-}
+	// 'signup': UserService.signup,
+	// 'login': UserService.login,
+	// 'getLoggedInEmail': UserService.getLoggedInEmail,
+	// 'checkLogin':UserService.checkLogin,
+	// 'getCart': CartService.get,
+	// 'addToCart': CartService.addToCart,
+	// 'removeFromCart': CartService.removeFromCart,
+	// 'submitOrder': CartService.submitOrder,
+};
 
+//
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   	console.log('Message received:', request.action);
 

@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         status.className = '';
         
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        console.log(tab);
         const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
         console.log("response from content:", response);
         if (response.success) {
