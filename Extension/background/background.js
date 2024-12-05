@@ -19,37 +19,70 @@ class StorageService {
 }
 
 
-
-
 //communication with extension pages: popup, content
 const actionToServiceMap = {
-	'signup': UserService.signup,
-	'login': UserService.login,
-	'getLoggedInEmail': UserService.getLoggedInEmail,
-	'checkLogin':UserService.checkLogin,
-	'getCart': CartService.get,
-	'addToCart': CartService.addToCart,
-	'removeFromCart': CartService.removeFromCart,
-	'submitOrder': CartService.submitOrder,
+    'extractProduct': extractProductService,
+    'createListing': createListingService,
+   
+};
+
+
+async function extractProductService(request) {
+    try {
+        
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
+        
+        if (!response.success) {
+            throw new Error(response.error);
+        }
+        
+        return response.data;
+    } catch (error) {
+        console.error('Extract Product Service Error:', error);
+        throw error;
+    }
 }
 
+async function createListingService(request) {
+    try {
+        // Perform eBay listing creation logic
+        const response = await chrome.tabs.sendMessage(request.tab.id, { 
+            action: 'createListing', 
+            productData: request.productData 
+        });
+        
+        if (!response.success) {
+            throw new Error(response.error);
+        }
+        
+        return response.data;
+    } catch (error) {
+        console.error('Create Listing Service Error:', error);
+        throw error;
+    }
+}
+
+ 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  	console.log('Message received:', request.action);
+    console.log('Message received:', request.action);
 
-	if(!actionToServiceMap[request.action]){
-		console.error('Unknown action:', request.action);
-		sendResponse({ success: false, error: 'Unknown action' });
-		return true;
-	}
+    // Check if action exists in service map
+    if (!actionToServiceMap[request.action]) {
+        console.error('Unknown action:', request.action);
+        sendResponse({ success: false, error: 'Unknown action' });
+        return true;
+    }
 
-	actionToServiceMap[request.action](request)
-	.then(response => {
-		sendResponse({ success: true, data: response });
-	})
-	.catch(error => {
-		console.error('Error:', error);
-		sendResponse({ success: false, error: error.toString() });
-	});
-  	return true;
-	
-});
+    // Execute the corresponding service
+    actionToServiceMap[request.action](request)
+        .then(response => {
+            sendResponse({ success: true, data: response });
+        })
+        .catch(error => {
+            console.error('Service Error:', error);
+            sendResponse({ success: false, error: error.toString() });
+        });
+
+    return true;
+})
