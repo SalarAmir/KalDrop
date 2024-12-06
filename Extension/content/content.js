@@ -1,14 +1,17 @@
 import { AliExpressScraper } from './scraper.js';
 import { EbayListingAutomator } from './EbayLister.js';
 
-const scraper = new AliExpressScraper();
+console.log("Content")
 
+const scraper = new AliExpressScraper();
+console.log("scraper",scraper)
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === 'extractProduct') {
     try {
       // Scrape product data
       console.log('Extracting product data...');
       const scrapeResult = await scraper.scrapeProduct();
+      console.log("scrape result:",scrapeResult)
       if (!scrapeResult.success) throw new Error(scrapeResult.error);
 
       // Automate eBay listing

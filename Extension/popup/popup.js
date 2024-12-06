@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Popup loaded');
+    console.log('new Popup loaded');
     const extractBtn = document.getElementById('extractBtn');
     const listBtn = document.getElementById('listBtn');
     const profitInfo = document.getElementById('profitInfo');
