@@ -1,69 +1,69 @@
 console.log("Background script")
 
-// class StorageService {
+class StorageService {
 
-// 	static get(key) {
-// 		return new Promise((resolve) => {
-// 			chrome.storage.local.get([key], function (result) {
-// 				console.log(`${key}:`, result[key]);
-// 				resolve(result[key]);
-// 			});
-// 		});
-// 	}
+	static get(key) {
+		return new Promise((resolve) => {
+			chrome.storage.local.get([key], function (result) {
+				console.log(`${key}:`, result[key]);
+				resolve(result[key]);
+			});
+		});
+	}
 
-// 	static set(key, value) {
-// 		return new Promise((resolve) => {
-// 			chrome.storage.local.set({ [key]: value }, function () {
-// 				console.log(`${key} set to:`, value);
-// 				resolve();
-// 			});
-// 		});
-// 	}
-// };
+	static set(key, value) {
+		return new Promise((resolve) => {
+			chrome.storage.local.set({ [key]: value }, function () {
+				console.log(`${key} set to:`, value);
+				resolve();
+			});
+		});
+	}
+};
 
 
 //communication with extension pages: popup, content
 const actionToServiceMap = {
-	// 'extractProduct':extractProductService,
-	// 'listProduct':createListingService
+	'extractProduct':extractProductService,
+	'listProduct':createListingService
 };
 
-// async function extractProductService(request) {
-//     try {
+async function extractProductService(request) {
+    try {
         
-//         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-//         const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
         
-//         if (!response.success) {
-//             throw new Error(response.error);
-//         }
+        if (!response.success) {
+            throw new Error(response.error);
+        }
         
-//         return response.data;
-//     } catch (error) {
-//         console.error('Extract Product Service Error:', error);
-//         throw error;
-//     }
-// }
+        return response.data;
+    } catch (error) {
+        console.error('Extract Product Service Error:', error);
+        throw error;
+    }
+}
 
 
-// async function createListingService(request) {
-//     try {
-//         // Perform eBay listing creation logic
-//         const response = await chrome.tabs.sendMessage(request.tab.id, { 
-//             action: 'listProduct', 
-//             productData: request.productData 
-//         });
+async function createListingService(request) {
+    try {
+        // Perform eBay listing creation logic
+        const response = await chrome.tabs.sendMessage(request.tab.id, { 
+            action: 'listProduct', 
+            productData: request.productData 
+        });
         
-//         if (!response.success) {
-//             throw new Error(response.error);
-//         }
+        if (!response.success) {
+            throw new Error(response.error);
+        }
         
-//         return response.data;
-//     } catch (error) {
-//         console.error('Create Listing Service Error:', error);
-//         throw error;
-//     }
-// }
+        return response.data;
+    } catch (error) {
+        console.error('Create Listing Service Error:', error);
+        throw error;
+    }
+}
 
 
 
