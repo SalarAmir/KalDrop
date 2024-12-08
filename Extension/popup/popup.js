@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         status.className = '';
         
         await chrome.runtime.sendMessage({
-          action: 'createListing',
+          action: 'listProduct',
           productData: currentProductData
         });
         

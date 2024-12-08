@@ -27,3 +27,33 @@ Descriptions:
 
 
 
+Ebay Classes:
+
+Item Title:
+div: .textbox textbox--large textbox--fluid se-textbox--input
+input
+
+Brand:
+div: .fake-menu-button
+write unbranded and then click enter
+
+Type:
+
+button: .fake-link
+click
+
+Description:
+.se-rte__button-group-editor__html hidden
+
+Pricing:
+Format: listbox-button listbox-button--fluid listbox-button--form
+- Click on Buy Now
+
+Price:
+div .textbox textbox--fluid se-textbox--input
+- Access its input to change class
+
+Require immediate payment when buyer uses Buy It Now??
+Quantity??
+Allow offers??
+Shipping??
