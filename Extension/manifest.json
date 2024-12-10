@@ -17,7 +17,7 @@
       "service_worker": "background.bundle.js"
     },
     "content_scripts": [{
-      "matches": ["*://*.aliexpress.*/*"],
+      "matches": ["<all_urls>"],
       "js": ["content.bundle.js"]
     }],
     "action": {

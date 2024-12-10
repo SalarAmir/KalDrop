@@ -29,26 +29,28 @@ async function extractProductService(request) {
     try {
         console.log('[extractProductService] Started with request:', request);
 
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        console.log('[extractProductService] Active tab query result:', tab);
+        // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        // console.log('[extractProductService] Active tab query result:', tab);
 
-        if (!tab) {
-            throw new Error('No active tab found');
-        }
+        // if (!tab) {
+        //     throw new Error('No active tab found');
+        // }
 
-        console.log('[extractProductService] Sending message to tab ID:', tab.id);
-        const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
-        console.log('[extractProductService] Response from content script:', response);
+        // console.log('[extractProductService] Sending message to tab ID:', tab.id);
+        // const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
+        // console.log('[extractProductService] Response from content script:', response);
 
-        if (!response.success) {
-            throw new Error(response.error || 'Failed to extract product');
-        }
+        // if (!response.success) {
+        //     throw new Error(response.error || 'Failed to extract product');
+        // }
 
-        console.log('[extractProductService] Storing extracted product data:', response.data);
-        await StorageService.set('lastExtractedProduct', response.data);
+        console.log('[extractProductService] Storing extracted product data:', request.data);
+        await StorageService.set('lastExtractedProduct', request.data);
         console.log('[extractProductService] Product data saved successfully.');
+		const lastProd = await StorageService.get("lastExtractedProduct");
+		console.log("[extractProductService] in local: ",lastProd);
 
-        return response.data;
+        return {success:true, data:request.data};
     } catch (error) {
         console.error('[extractProductService] Error:', error);
         throw error;
