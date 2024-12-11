@@ -57,3 +57,15 @@ Require immediate payment when buyer uses Buy It Now??
 Quantity??
 Allow offers??
 Shipping??
+
+
+COMMUNICATION GUIDE:
+content -> background:
+    actions:
+        extractProduct
+        listProduct
+background -> content:
+    lister actions:
+        clickElement
+        navigateToPage
+        fillValue
