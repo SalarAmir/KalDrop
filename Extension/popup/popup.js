@@ -33,13 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
         status.textContent = 'Creating eBay listing...';
         status.className = '';
         
-        await chrome.runtime.sendMessage({
+        // await backgroundCommunication.sendMessage("listProduct",{productData:currentProductData});
+        const resp = await chrome.runtime.sendMessage({
           action: 'listProduct',
           productData: currentProductData
         });
-        
-        status.textContent = 'Listing created successfully!';
-        status.className = 'success';
+        if(resp.success){
+          status.textContent = 'Listing created successfully!';
+          status.className = 'success';
+        }
       } catch (error) {
         status.textContent = 'Error creating listing: ' + error.message;
         status.className = 'error';

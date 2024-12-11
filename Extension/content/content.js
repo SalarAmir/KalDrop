@@ -5,6 +5,7 @@ import { BackgroundCommunication } from "./backgroundCommunication.js";
 console.log("Content Script Loaded");
 
 const scraper = new AliExpressScraper();
+const lister = new EbayListingAutomator();
 console.log("scraper", scraper);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -69,30 +70,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
 
       // return true;
-    } else if (request.action === "listProduct") {
-      try {
-        console.log("Ebay Listing begins..");
-
-        // Validate incoming product data
-        if (!request.productData) {
-          throw new Error("No product data provided for listing");
-        }
-
-        // Create eBay listing
-        const lister = new EbayListingAutomator(request.productData);
-        await lister.createListing();
-
-        sendResponse({
-          success: true,
-          message: "Listing created successfully on eBay!",
-        });
-      } catch (error) {
-        console.error("Error creating eBay listing:", error);
-        sendResponse({
-          success: false,
-          error: error.message,
-        });
-      }
     }
   })();
 

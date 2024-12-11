@@ -1,4 +1,4 @@
-export class EbayListingAutomator {
+export class EbayListingAutomatorOld {
     constructor(productData) {
         console.log('Initializing EbayListingAutomator...');
         if (!productData) throw new Error('Product data is required to create a listing');
@@ -29,15 +29,16 @@ export class EbayListingAutomator {
     }
 
     async navigateToSellPage() {
-        console.log('Navigating to the eBay Sell page...');
-        window.location.href = 'https://www.ebay.com/sell/create';
-        await this.waitForPageLoad();
-        console.log('Navigated to the Sell page.');
+        // console.log('Navigating to the eBay Sell page...');
+        // window.location.href = 'https://www.ebay.com/sell/create';
+        // await this.waitForPageLoad();
+        // console.log('Navigated to the Sell page.');
     }
 
     async startNewListing() {
         console.log('Starting a new eBay listing...');
-        const newListingBtn = await this.waitAndFindElement('a[textual-display fake-btn fake-btn--primary"]');
+        // const newListingBtn = await this.waitAndFindElement('a[textual-display fake-btn fake-btn--primary"]');
+        const newListingBtn = await this.waitAndFindElement('#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a');
         newListingBtn.click();
         await this.waitForPageLoad();
         console.log('New eBay listing started.');
@@ -190,5 +191,127 @@ export class EbayListingAutomator {
 
         await this.waitForListingConfirmation();
         console.log('Listing submitted and confirmed.');
+    }
+
+    // utils:
+    //wait for page load:
+    async waitForPageLoad() {
+        return new Promise((resolve) => {
+            window.addEventListener('load', resolve);
+        });
+    }
+
+    async waitAndFindElement(selector) {
+        return new Promise((resolve) => {
+            const interval = setInterval(() => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    clearInterval(interval);
+                    resolve(element);
+                }
+            }, 1000);
+        });
+    }
+}
+
+//automator v0.2
+export class EbayListingAutomator {
+    constructor() {
+        this.actionHandlers = {
+            'clickElement': this.clickElement.bind(this),
+            'navigateToPage': this.navigateToPage.bind(this),
+            'fillValue': this.fillValue.bind(this),
+        };
+        console.log('EbayListingAutomator initialized.');
+        chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+
+        // Set up message listener
+    }
+
+    // Message handler to route actions
+    async handleMessage(request, sender, sendResponse) {
+        console.log('Content script received message:', request);
+        // Handle individual step actions if needed
+        const actionHandler = this.actionHandlers[request.action];
+        if (actionHandler) {
+            try {
+                const result = await actionHandler(request);
+                if(!result) {
+                    throw new Error(`Action ${request.action} failed`);
+                }
+                // sendResponse({ success: true, data: result });
+                sendResponse({ success: true, message: 'Action completed successfully' });
+            } catch (error) {
+                console.error(`Action ${request.action} failed:`, error);
+                sendResponse({ 
+                    success: false, 
+                    error: error.toString() 
+                });
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    async clickElement(requestData) {
+        /*
+            requestData: {
+                selector: ""
+            }
+        */
+        const element = await this.waitAndFindElement(requestData.selector);
+        if (!element) {
+            throw new Error(`Element not found: ${request.selector}`);
+        }
+
+        element.click();
+        return true;
+    }
+
+    async navigateToPage(requestData) {
+        if(!requestData.url) {
+            throw new Error('URL is required to navigate to a page');
+        }
+        window.location.href = requestData.url;
+        return true;
+    }
+
+    async fillValue(requestData) {
+        /*
+            requestData: {
+                value: "",
+                selector: ""
+            }
+        */
+        console.log('Filling value:', requestData.value, 'in element:', requestData.selector);
+        const element = await this.waitAndFindElement(requestData.selector);
+        if (!element) {
+            throw new Error(`Element not found: ${requestData.selector}`);
+        }
+        element.value = requestData.value;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+    }
+
+    // Utility methods
+    async waitAndFindElement(selector, timeout = 10000) {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+
+            const checkForElement = () => {
+                const element = document.querySelector(selector);
+                
+                if (element) {
+                    resolve(element);
+                } else if (Date.now() - startTime > timeout) {
+                    reject(new Error(`Element not found: ${selector}`));
+                } else {
+                    setTimeout(checkForElement, 500);
+                }
+            };
+
+            checkForElement();
+        });
     }
 }

@@ -1,7 +1,5 @@
 console.log("Background script initialized");
 
-let isProcessing=false
-
 class StorageService {
     static get(key) {
         console.log(`[StorageService.get] Fetching key: ${key}`);
@@ -24,26 +22,9 @@ class StorageService {
     }
 }
 
-// Communication services
 async function extractProductService(request) {
     try {
         console.log('[extractProductService] Started with request:', request);
-
-        // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        // console.log('[extractProductService] Active tab query result:', tab);
-
-        // if (!tab) {
-        //     throw new Error('No active tab found');
-        // }
-
-        // console.log('[extractProductService] Sending message to tab ID:', tab.id);
-        // const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
-        // console.log('[extractProductService] Response from content script:', response);
-
-        // if (!response.success) {
-        //     throw new Error(response.error || 'Failed to extract product');
-        // }
-
         console.log('[extractProductService] Storing extracted product data:', request.data);
         await StorageService.set('lastExtractedProduct', request.data);
         console.log('[extractProductService] Product data saved successfully.');
@@ -53,77 +34,106 @@ async function extractProductService(request) {
         return {success:true, data:request.data};
     } catch (error) {
         console.error('[extractProductService] Error:', error);
-        throw error;
+        return {success:false, error:error.toString()};
     }
 }
-async function createListingService(request) {
-    if (isProcessing) {
-        console.log('[createListingService] A listing process is already running. Ignoring this request.');
-        return;
+
+async function createListingService() {
+    const currentListingService = new ListingService();
+    try{
+        const lastProd = await StorageService.get("lastExtractedProduct");
+        console.log("[createListingService] in local: ",lastProd);
+        await currentListingService.startListingProcess(lastProd);
+        console.log("[createListingService] Listing finished successfully.");
+        return {success:true, data:lastProd};
     }
-
-    isProcessing = true; // Set flag to indicate processing has started
-    console.log('[createListingService] Started with request:', request);
-
-    try {
-        let productData = request.productData;
-        console.log('[createListingService] Product data from request:', productData);
-
-        if (!productData) {
-            console.log('[createListingService] No product data in request. Attempting to retrieve from storage...');
-            productData = await StorageService.get('lastExtractedProduct');
-            console.log('[createListingService] Retrieved product data from storage:', productData);
-
-            if (!productData) {
-                throw new Error('No product data available for listing');
-            }
-        }
-
-        const [existingTab] = await chrome.tabs.query({
-            url: 'https://www.ebay.com/sell/create*',
-        });
-        console.log('[createListingService] Tab query result for eBay listing page:', existingTab);
-
-        let tabId;
-        if (!existingTab) {
-            console.log('[createListingService] eBay listing page not open, creating a new tab...');
-            const newTab = await chrome.tabs.create({
-                url: 'https://www.ebay.com/sell/create',
-                active: true,
-            });
-            tabId = newTab.id;
-
-            console.log('[createListingService] New tab created with ID:', tabId);
-
-            // Wait for the new tab to load
-            await waitForTabLoad(tabId);
-            console.log('[createListingService] New tab has fully loaded.');
-        } else {
-            console.log('[createListingService] Using existing tab with ID:', existingTab.id);
-            tabId = existingTab.id;
-        }
-
-        // Send product data to the tab
-        const response = await chrome.tabs.sendMessage(tabId, {
-            action: 'listProduct',
-            productData: productData,
-        });
-        console.log('[createListingService] Response from content script:', response);
-
-        if (!response.success) {
-            throw new Error(response.error || 'Failed to create eBay listing');
-        }
-
-        return response.data;
-    } catch (error) {
+    catch(error){
         console.error('[createListingService] Error:', error);
         throw error;
-    } finally {
-        isProcessing = false; // Reset flag when processing is complete
+
     }
 }
 
-// Utility to wait for a tab to load
+class ListingService{
+    
+    /*
+        producData:{
+            "title":"",
+            "description": "",
+            "price": ,
+            "images": [],
+            "categoryId": "",
+            "listingOptions": {
+                "requireImmediatePayment": true,
+                "quantity": 5,
+                "allowOffers": true
+            }
+        }
+    */
+
+    constructor(){
+        //define actions sequence as list of functions
+        this.processing = false;
+        this.listingTabId = null;
+        this.productData = null;
+
+        this.actions = [
+            // this.navigateToSellPage,
+            (productData)=>this.clickListButton(productData),
+            (productData) =>this.fillTitle(productData),
+        ];
+    }
+
+    async startListingProcess(productData){
+        if(this.processing){
+            console.log('[ListingService] A listing process is already running. Ignoring this request.');
+            return;
+        }
+        this.processing = true;
+        console.log('[ListingService] Started with product data:', productData);
+        const newTab = await chrome.tabs.create({
+            url: 'https://www.ebay.com/sell/create',
+            active: true,
+        })
+        console.log('[ListingService] New tab created with ID:', newTab.id);
+        this.listingTabId = newTab.id;
+        try {
+            for (const action of this.actions) {
+                console.log('[ListingService] Executing action:', action.name);
+                console.log(this.listingTabId);
+                await action(productData);
+            }
+        } catch (error) {
+            console.error('[ListingService] Error:', error);
+            throw error;
+        } finally {
+            this.processing = false;
+        }
+    }
+
+    async clickListButton(productData){
+        console.log('[ListingService] Clicking list button:', productData.title);
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'clickElement',
+            selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+        })
+        console.log('[ListingService] List button clicked successfully:', response);
+
+    }
+
+    async fillTitle(productData){
+        console.log('[ListingService] Filling title:', productData.title);
+        console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'fillValue',
+            selector:'#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
+            value: productData.title,
+        });
+        console.log('[ListingService] Title filled successfully:', response);
+    }
+}
+
+
 async function waitForTabLoad(tabId, timeout = 15000) {
     console.log(`[waitForTabLoad] Waiting for tab ID ${tabId} to load...`);
     return new Promise((resolve, reject) => {
@@ -149,11 +159,42 @@ async function waitForTabLoad(tabId, timeout = 15000) {
     });
 }
 
+
+
+// Communication services
+class tabCommunication{
+    static async sendMessage(tabId, message) {
+        const response = await chrome.tabs.sendMessage(tabId, message);
+        if(!response){
+            throw new Error('No response from content script');
+        }
+        if(!response.success){
+            throw new Error(response.error || 'Content script failed to process message');
+        }
+        return response;
+    }
+
+    static async sendMessageRetries(tabId, message, maxRetries = 3, retryDelay = 2000) {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return await this.sendMessage(tabId, message);
+            } catch (error) {
+                console.warn(`Attempt ${attempt+1} failed:`, error);
+                if (attempt >= maxRetries) {
+                    throw error;
+                }
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
+        }
+    }
+
+}
+
+
 // Action to service mapping
 const actionToServiceMap = {
     'extractProduct': extractProductService,
     'listProduct': createListingService,
-	
 };
 
 // Debugging helper to log all available actions
@@ -190,12 +231,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'debugStorage') {
-        chrome.storage.local.get('lastExtractedProduct', (result) => {
-            console.log('[Debug] Stored product data:', result.lastExtractedProduct);
-            sendResponse({ data: result.lastExtractedProduct });
-        });
-        return true; // To keep the sendResponse callback alive
-    }
-});
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+//     if (request.action === 'debugStorage') {
+//         chrome.storage.local.get('lastExtractedProduct', (result) => {
+//             console.log('[Debug] Stored product data:', result.lastExtractedProduct);
+//             sendResponse({ data: result.lastExtractedProduct });
+//         });
+//         return true; // To keep the sendResponse callback alive
+//     }
+// });
