@@ -55,8 +55,8 @@ div .textbox textbox--fluid se-textbox--input
 
 Require immediate payment when buyer uses Buy It Now??
 Quantity??
-Allow offers??
-Shipping??
+Allow offers √
+Shipping √
 
 
 COMMUNICATION GUIDE:

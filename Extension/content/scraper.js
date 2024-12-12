@@ -8,7 +8,7 @@ export class AliExpressScraper {
     try {
       const data = {
         title: this.getTitle(),
-        description: this.getDescription(),
+        descriptionImages: this.getDescriptionImages(), // Replaced description with descriptionImages
         price: this.getPrice(),
         originalPrice: this.getOriginalPrice(),
         discount: this.getDiscount(),
@@ -18,6 +18,7 @@ export class AliExpressScraper {
         rating: this.getRating(),
         reviews: this.getReviews(),
         soldCount: this.getSoldCount(),
+        specifications: this.getSpecifications(),
       };
 
       const profitCalculation = this.calculateProfit(data.price, data.shipping.cost);
@@ -36,9 +37,19 @@ export class AliExpressScraper {
     return titleElement.textContent.trim();
   }
 
-  getDescription() {
-    // AliExpress product pages typically don't show full description in the initial view
-    return '';
+  getDescriptionImages() {
+    const container = document.querySelector('.detail-desc-decorate-richtext'); // Select the container div
+    if (!container) {
+      throw new Error('Container with class "detail-desc-decorate-richtext" not found.');
+    }
+
+    const images = container.querySelectorAll('img'); // Select all image elements inside the container
+    const imageUrls = Array.from(images) // Convert NodeList to an array
+      .slice(0, 5) // Get only the first 5 images
+      .map(img => img.src) // Extract the 'src' attribute of each image
+      .filter(Boolean); // Filter out any empty or undefined URLs
+
+    return imageUrls;
   }
 
   getPrice() {
@@ -63,11 +74,10 @@ export class AliExpressScraper {
   }
 
   getShipping() {
-    // No specific shipping price element, assuming free or standard
     return {
       cost: 0,
       method: 'Standard',
-      note: 'Tax excluded, add at checkout if applicable'
+      note: 'Tax excluded, add at checkout if applicable',
     };
   }
 
@@ -75,17 +85,17 @@ export class AliExpressScraper {
     const colorVariants = Array.from(document.querySelectorAll('.sku-item--image--jMUnnGA img')).map(img => ({
       type: 'Color',
       value: img.alt,
-      image: img.src
+      image: img.src,
     }));
 
     const sizeVariants = Array.from(document.querySelectorAll('.sku-item--text--hYfAukP span')).map(size => ({
       type: 'Size',
-      value: size.textContent.trim()
+      value: size.textContent.trim(),
     }));
 
     return {
       colors: colorVariants,
-      sizes: sizeVariants
+      sizes: sizeVariants,
     };
   }
 
@@ -102,6 +112,28 @@ export class AliExpressScraper {
   getSoldCount() {
     const soldElement = document.querySelector('.reviewer--sold--ytPeoEy');
     return soldElement ? parseInt(soldElement.textContent.replace(/[^0-9]/g, '')) : 0;
+  }
+
+  getSpecifications() {
+    const specList = document.querySelectorAll('.specification--prop--Jh28bKu'); // Select specification containers
+    if (!specList) {
+      return {}; // Return an empty object if no specifications are found
+    }
+
+    const specifications = {};
+
+    specList.forEach(spec => {
+      const titleElement = spec.querySelector('.specification--title--SfH3sA8 span');
+      const valueElement = spec.querySelector('.specification--desc--Dxx6W0W span');
+
+      if (titleElement && valueElement) {
+        const key = titleElement.textContent.trim(); // Get the specification title
+        const value = valueElement.textContent.trim(); // Get the corresponding value
+        specifications[key] = value; // Store in the object
+      }
+    });
+
+    return specifications;
   }
 
   calculateProfit(price, shippingCost) {
