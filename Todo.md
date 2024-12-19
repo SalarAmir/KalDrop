@@ -69,3 +69,26 @@ background -> content:
         clickElement
         navigateToPage
         fillValue
+
+
+Ebay listing sequence:
+
+https://www.ebay.com/sl/sell:
+    List an item button
+
+https://www.ebay.com/sl/prelist/suggest
+    Item title box
+    Search button
+
+https://www.ebay.com/sl/prelist/identify
+    1. Match items:
+        Continue without match button
+        Confirm Details popup
+            - condition
+            Continue to listing button
+    2. Category Popup
+
+https://www.ebay.com/lstng
+    Item form
+    Images
+    List it Button

@@ -54,4 +54,4 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('profit').textContent = `$${data.estimatedProfit}`;
       profitInfo.style.display = 'block';
     }
-  });
+});

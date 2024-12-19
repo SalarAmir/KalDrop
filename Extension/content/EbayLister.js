@@ -12,15 +12,7 @@ export class EbayListingAutomatorOld {
             await this.navigateToSellPage();
             await this.startNewListing();
             await this.fillTitle();
-            await this.setBrand();
-            await this.setListingType();
-            await this.fillDescription();
-            await this.uploadImages();
-            await this.setCategoryAndCondition();
-            await this.setPricing();
-            await this.setListingOptions();
-            await this.setShippingOptions();
-            await this.reviewAndSubmitListing();
+
             console.log('eBay listing created successfully!');
         } catch (error) {
             console.error('Error creating eBay listing:', error);
@@ -50,44 +42,6 @@ export class EbayListingAutomatorOld {
         titleInput.value = this.productData.title;
         titleInput.dispatchEvent(new Event('input', { bubbles: true }));
         console.log('Title filled with:', this.productData.title);
-    }
-
-    async setBrand() {
-        console.log('Setting brand...');
-        const brandInput = await this.waitAndFindElement('.fake-menu-button');
-        brandInput.value = 'Unbranded';
-        brandInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-        const enterKeyEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            bubbles: true,
-            cancelable: true,
-        });
-        brandInput.dispatchEvent(enterKeyEvent);
-        console.log('Brand set to "Unbranded".');
-    }
-
-    async setListingType() {
-        console.log('Setting listing type...');
-        const buyNowButton = await this.waitAndFindElement('.fake-link');
-        buyNowButton.click();
-        await this.waitForPageLoad();
-        console.log('Listing type set to "Buy Now".');
-    }
-
-    async fillDescription() {
-        console.log('Filling description...');
-        try {
-            const htmlEditButton = await this.waitAndFindElement('.se-rte__button-group-editor__html.hidden');
-            htmlEditButton.click();
-
-            const descriptionTextarea = await this.waitAndFindElement('textarea');
-            descriptionTextarea.value = this.productData.description;
-            descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log('Description filled with:', this.productData.description);
-        } catch (error) {
-            console.error('Error setting description:', error);
-        }
     }
 
     async uploadImages() {
@@ -221,6 +175,9 @@ export class EbayListingAutomator {
             'clickElement': this.clickElement.bind(this),
             'navigateToPage': this.navigateToPage.bind(this),
             'fillValue': this.fillValue.bind(this),
+            'detectElement':this.detectElement.bind(this),
+            'selectOption': this.selectOption.bind(this),
+            'uploadImages': this.uploadImages.bind(this)
         };
         console.log('EbayListingAutomator initialized.');
         chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
@@ -294,6 +251,151 @@ export class EbayListingAutomator {
         return true;
     }
 
+    async detectElement(requestData){
+        /*
+            requestData: {
+                selector: ""
+            }
+        */
+        const element = await this.waitAndFindElement(requestData.selector);
+        return !!element;   
+    }
+
+    async selectOption(requestData) {
+        /*
+            requestData: {
+                selector: "",  // Selector for the overall radio button/option group
+                text: ""            // Text of the option to select
+                index: number // will be used if text not provided or text not found
+            }
+        */
+        const optionGroup = await this.waitAndFindElement(requestData.selector);
+        if (!optionGroup) {
+            throw new Error(`Option group not found: ${requestData.selector}`);
+        }
+
+        const radioInputs = optionGroup.querySelectorAll('input[type="radio"]');
+        let targetRadioInput;
+        let textFound = false;
+        if(requestData.text){
+            
+            const labels = optionGroup.querySelectorAll('label');
+            
+            // Find the label that matches the option text
+            const targetLabel = Array.from(labels).find(label => 
+                label.textContent.trim() === requestData.text.trim()
+            );
+        
+            if (!targetLabel) {
+                textFound = false;
+
+            }else{
+                targetRadioInput = targetLabel.previousElementSibling?.querySelector('input[type="radio"]') || 
+                    targetLabel.querySelector('input[type="radio"]');
+
+            }
+        
+            // Find the associated radio input
+        }
+        
+        if(!requestData.text || !textFound){
+            // Select the radio input by index
+            targetRadioInput = radioInputs[requestData.index];
+        }
+    
+        if (!targetRadioInput) {
+            throw new Error(`Radio input not found for option: ${requestData.optionText}, ${requestData.index}`);
+        }
+    
+        // Click the radio input
+        targetRadioInput.click();
+    
+        // Dispatch change event to ensure any attached event listeners are triggered
+        targetRadioInput.dispatchEvent(new Event('change', { bubbles: true }));
+    
+        return true;
+    }
+    
+    async uploadImages(requestData) {
+        /*
+            requestData: {
+                selector: "",
+                images: []
+            }
+        */
+        try {
+            const uploadContainer = await this.waitAndFindElement(requestData.selector);
+            
+            //limit images to 25:
+            if(requestData.images.length > 25){
+                requestData.images = requestData.images.slice(0,25);
+            }
+
+            for (const imageUrl of requestData.images) {
+                const uploadButton = uploadContainer.querySelector('button');
+                if (!uploadButton) {
+                    throw new Error('Upload button not found');
+                }
+     
+                let fileInput = null;
+                const observer = new MutationObserver((mutations, obs) => {
+                    const foundInput = document.querySelector('input[type="file"]');
+                    if (foundInput) {
+                        fileInput = foundInput;
+                        obs.disconnect();
+                    }
+                });
+     
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+     
+                uploadButton.click();
+     
+                await new Promise((resolve) => {
+                    const checkInput = setInterval(() => {
+                        const input = document.querySelector('input[type="file"]');
+                        if (input) {
+                            fileInput = input;
+                            clearInterval(checkInput);
+                            observer.disconnect();
+                            resolve();
+                        }
+                    }, 100);
+     
+                    setTimeout(() => {
+                        clearInterval(checkInput);
+                        observer.disconnect();
+                        resolve();
+                    }, 5000);
+                });
+     
+                if (!fileInput) {
+                    throw new Error('File input element not found after clicking upload button');
+                }
+     
+                const imageFile = await fetch(imageUrl);
+                const blob = await imageFile.blob();
+                const file = new File([blob], `product-image-${requestData.images.indexOf(imageUrl)}.jpg`, { type: blob.type });
+     
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                
+                fileInput.files = dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                fileInput.dispatchEvent(new Event('input', { bubbles: true }));
+     
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+     
+            return true;
+        } catch (error) {
+            console.error('Error in uploadImages:', error);
+            throw error;
+        }
+    }
+    
     // Utility methods
     async waitAndFindElement(selector, timeout = 10000) {
         return new Promise((resolve, reject) => {

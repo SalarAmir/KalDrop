@@ -57,7 +57,7 @@ async function createListingService() {
 class ListingService{
     
     /*
-        producData:{
+        productData:{
             "title":"",
             "description": "",
             "price": ,
@@ -80,7 +80,10 @@ class ListingService{
         this.actions = [
             // this.navigateToSellPage,
             (productData)=>this.clickListButton(productData),
-            (productData) =>this.fillTitle(productData),
+            (productData)=>this.fillTitle(productData),
+            (productData)=>this.selectCategory(productData),
+            (productData)=>this.selectCondition(productData),
+            (productData)=>this.fillImages(productData),
         ];
     }
 
@@ -130,6 +133,70 @@ class ListingService{
             value: productData.title,
         });
         console.log('[ListingService] Title filled successfully:', response);
+        const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'clickElement',
+            selector:'#mainContent > div > div > div.keyword-suggestion > button',
+        });
+        console.log('[ListingService] Clicked on suggested title:', responseClick);
+    }
+
+    async selectCategory(productData){
+        console.log("[ListingService] Looking for category popup:")
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'detectElement',
+            selector: '#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker',
+        })
+        if(!response.success){
+            console.log("[ListingService] Category popup not found. Continuing..")
+            return;
+        }
+        console.log("[ListingService] Category popup found. Selecting category..")
+        const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action :'clickElement',
+            selector:'#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker > div > div.se-panel-container__body > div > div.se-panel-section.category-picker__suggested-section > div:nth-child(2) > button > span > span > span'
+        })
+        console.log("[ListingService] Category selected successfully.")
+        console.log("[ListingService] Clicking without match button.");
+        const responseClickWithoutMatch = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action :'clickElement',
+            selector:'#mainContent > div > div > div.prelist-radix__next-container > button'
+        })
+    }
+
+    async selectCondition(productData){
+        console.log("[ListingService] Looking for condition popup..")
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'detectElement',
+            selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
+        })
+        if(!response.success){
+            console.log("[ListingService] Condition popup not found. Continuing..")
+            return;
+        }
+        console.log("[ListingService] Condition popup found. Selecting condition..")
+        const respOptionSelect = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'selectOption',
+            selector:'.condition-picker-radix__radio-group',
+            text: 'New with box',
+            index: 0
+        })
+        console.log("[ListingService] Condition selected successfully.")
+        //continue listing button:
+        const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action :'clickElement',
+            selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.condition-dialog-non-block-radix__continue > button'
+        })
+        console.log("[ListingService] Clicked on continue button.")
+    }
+
+    async fillImages(productData){
+        console.log('[ListingService] Filling images:', productData.images);
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+            action: 'uploadImages',
+            selector:'#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__photos.summary__photos-image-guidance.summary__photos--photo-framework > div:nth-child(2) > div > div.uploader-ui.empty > div:nth-child(1) > div.uploader-thumbnails-ux.uploader-thumbnails-ux--inline.uploader-thumbnails-ux--inline-edit > div',
+            images: productData.images,
+        });
+        console.log('[ListingService] Images filled successfully:', response);
     }
 }
 

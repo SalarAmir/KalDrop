@@ -40,7 +40,9 @@ export class AliExpressScraper {
   getDescriptionImages() {
     const container = document.querySelector('.detail-desc-decorate-richtext'); // Select the container div
     if (!container) {
-      throw new Error('Container with class "detail-desc-decorate-richtext" not found.');
+      // throw new Error('Container with class "detail-desc-decorate-richtext" not found.');
+      console.error('Container with class "detail-desc-decorate-richtext" not found.');
+      return []; // Return an empty array if the container is not found
     }
 
     const images = container.querySelectorAll('img'); // Select all image elements inside the container
