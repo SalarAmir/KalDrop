@@ -1,3 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_API_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+console.log("supabase:", supabase);
+
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('new Popup loaded');
     const extractBtn = document.getElementById('extractBtn');

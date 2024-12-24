@@ -1,5 +1,7 @@
 const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
+const webpack = require('webpack');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: {
@@ -26,10 +28,28 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from:'Extension/popup', to: 'popup'},
+        { from: 'Extension/popup', to: 'popup'},
         { from: 'Extension/manifest.json', to: 'manifest.json' }
       ]
+    }),
+    new Dotenv(),
+    new webpack.ProvidePlugin({
+      process: 'process/browser',
+    }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
     })
   ],
+  resolve: {
+    fallback: {
+      "path": require.resolve("path-browserify"),
+      "os": require.resolve("os-browserify/browser"),
+      "crypto": require.resolve("crypto-browserify"),
+      "stream": require.resolve("stream-browserify"),
+      "buffer": require.resolve("buffer/"),
+      "util": require.resolve("util/"),
+      "process": require.resolve("process/browser"),
+    }
+  },
   devtool: 'cheap-module-source-map'
 };
