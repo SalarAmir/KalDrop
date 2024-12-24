@@ -248,7 +248,8 @@ class tabCommunication{
             } catch (error) {
                 console.warn(`Attempt ${attempt+1} failed:`, error);
                 if (attempt >= maxRetries) {
-                    throw error;
+                    // throw error;
+                    return {success:false, error:error.toString()};
                 }
                 await new Promise(resolve => setTimeout(resolve, retryDelay));
             }

@@ -1,16 +1,25 @@
 - Extension (Automation + Scrapping)
     automation side
+        selecting suggested (next)
 
     scrapping side
-
+        images fix (next)
+        description images (next)
     frontend
-        popup with form and confirm button
-    
-    
-    scrapper (content)->popup -> background -> local
-    local -> lister
+        popup with form and confirm button DONE
 
-    background -> server
+        login (later)
+    
+    scrapper (content)->popup -> background -> local DONE
+    local -> lister DONE
+
+    background -> server (zroori) ABDULLAH
+
+-Server
+    -user apis GET SALAR
+    -product apis GET SALAR
+-Dashboard
+    -connect with server SALAR
 
 - Database (Users)
 - Payment (API)
