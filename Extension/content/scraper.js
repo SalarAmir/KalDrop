@@ -12,7 +12,7 @@ export class AliExpressScraper {
         price: this.getPrice(),
         originalPrice: this.getOriginalPrice(),
         discount: this.getDiscount(),
-        images: this.getImages(),
+        images: await this.getImages(),
         shipping: this.getShipping(),
         variants: this.getVariants(),
         rating: this.getRating(),
@@ -70,9 +70,27 @@ export class AliExpressScraper {
     return discountElement ? discountElement.textContent.trim() : null;
   }
 
-  getImages() {
-    const imageElements = document.querySelectorAll('.slider--item--FefNjlj img');
-    return Array.from(imageElements).map(img => img.src).filter(Boolean);
+  async getImages() {
+    //get slider buttons:
+    const sliderElements = document.querySelectorAll('.slider--item--FefNjlj img');
+    if (!sliderElements) console.error('Slider elements not found');
+    const images = [];
+    for (const sliderElement of sliderElements) {
+      const moveoverEvent = new MouseEvent('mouseover',{
+        bubbles: true,
+        cancelable: true,
+        view: window
+      });
+      sliderElement.dispatchEvent(moveoverEvent);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const [imageElement] = document.getElementsByClassName('magnifier--image--EYYoSlr');
+      if (!imageElement) {
+        console.error('Image element not found');
+        continue;
+      }
+      images.push(imageElement.src);
+    }
+    return images;
   }
 
   getShipping() {
