@@ -1,18 +1,28 @@
-import { createClient } from '@supabase/supabase-js';
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_API_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-console.log("supabase:", supabase);
-
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async() => {
+    const {auth_token:authToken} =await chrome.storage.local.get('auth_token');
+    console.log('authToken:', authToken);
+    if(!authToken){
+      
+        window.location.href = 'popup_login.html';
+        return;
+    }
     console.log('new Popup loaded');
     const extractBtn = document.getElementById('extractBtn');
     const listBtn = document.getElementById('listBtn');
     const profitInfo = document.getElementById('profitInfo');
     const status = document.getElementById('status');
+    const dashboardBtn = document.getElementById('dashboardBtn');
     let currentProductData = null;
-  
+    
+    dashboardBtn.addEventListener('click', async () => {
+      // await chrome.storage.local.remove('auth_token');
+      // window.location.href = 'popup_login.html';
+      chrome.tabs.create({
+        url: process.env.DASHBOARD_URL + '/login'
+      });
+      
+    });
+
     extractBtn.addEventListener('click', async () => {
       try {
         status.textContent = 'Extracting product data...';

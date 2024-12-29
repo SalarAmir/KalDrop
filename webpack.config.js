@@ -6,6 +6,7 @@ const Dotenv = require('dotenv-webpack');
 module.exports = {
   entry: {
     popup: './Extension/popup/popup.js',
+    login: './Extension/popup/login.js',
     content: './Extension/content/content.js',
     background: './Extension/background/background.js'
   },

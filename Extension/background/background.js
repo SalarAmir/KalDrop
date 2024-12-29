@@ -1,5 +1,24 @@
 console.log("Background script initialized");
 
+const frontendDomain = "localhost";
+const authCookieName = "noar.auth";
+const initAuth = async () => {
+    const cookies = await chrome.cookies.getAll({ name:authCookieName});
+    if(cookies.length === 0){
+        console.log('[initAuth] No auth cookie found.');
+        return;
+    }
+    // console.log('[initSupabase] Found cookie:', cookies);
+    //convert to json obj:
+    const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
+    // const authObj = decodeURIComponent(cookies[0].value);
+    const authToken = authObj.access_token;
+
+    console.log('[initAuth] Logged in user found:',authObj.user.email);
+    StorageService.set('auth_token', authToken);
+};
+initAuth();
+
 class StorageService {
     static get(key) {
         console.log(`[StorageService.get] Fetching key: ${key}`);
@@ -16,6 +35,16 @@ class StorageService {
         return new Promise((resolve) => {
             chrome.storage.local.set({ [key]: value }, function () {
                 console.log(`[StorageService.set] Successfully set ${key} to`, value);
+                resolve();
+            });
+        });
+    }
+
+    static remove(key) {
+        console.log(`[StorageService.remove] Removing key: ${key}`);
+        return new Promise((resolve) => {
+            chrome.storage.local.remove(key, function () {
+                console.log(`[StorageService.remove] Successfully removed ${key}`);
                 resolve();
             });
         });
@@ -200,7 +229,6 @@ class ListingService{
     }
 }
 
-
 async function waitForTabLoad(tabId, timeout = 15000) {
     console.log(`[waitForTabLoad] Waiting for tab ID ${tabId} to load...`);
     return new Promise((resolve, reject) => {
@@ -225,8 +253,6 @@ async function waitForTabLoad(tabId, timeout = 15000) {
         checkTab();
     });
 }
-
-
 
 // Communication services
 class tabCommunication{
@@ -257,7 +283,6 @@ class tabCommunication{
     }
 
 }
-
 
 // Action to service mapping
 const actionToServiceMap = {
@@ -299,12 +324,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 
-// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-//     if (request.action === 'debugStorage') {
-//         chrome.storage.local.get('lastExtractedProduct', (result) => {
-//             console.log('[Debug] Stored product data:', result.lastExtractedProduct);
-//             sendResponse({ data: result.lastExtractedProduct });
-//         });
-//         return true; // To keep the sendResponse callback alive
-//     }
-// });
+chrome.cookies.onChanged.addListener(async (changeInfo) => {
+    if(changeInfo.cookie.domain !== frontendDomain) return;
+    if(changeInfo.cookie.name !== authCookieName) return;
+    
+    if(changeInfo.removed){
+        console.log('[onCookieChanged] Auth cookie removed. Clearing local storage.');
+        await StorageService.remove('auth_token');
+        return;
+    }
+
+    const cookieToken = JSON.parse(decodeURIComponent(changeInfo.cookie.value)).access_token;
+    const currentToken = await StorageService.get('auth_token');
+    if(!currentToken){
+        console.log('[onCookieChanged] No current token found. Setting local storage.');
+        await StorageService.set('auth_token', cookieToken);
+    }
+    if(currentToken !== cookieToken){
+        console.log('[onCookieChanged] Token changed. Updating local storage.');
+        await StorageService.set('auth_token', cookieToken);
+    }
+});

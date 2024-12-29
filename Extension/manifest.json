@@ -7,11 +7,13 @@
       "activeTab",
       "scripting",
       "storage",
-      "tabs"
+      "tabs",
+      "cookies"
     ],
     "host_permissions": [
       "https://*.aliexpress.com/*",
-      "https://*.ebay.com/*"
+      "https://*.ebay.com/*",
+      "http://*.localhost/*"
     ],
     "background": {
       "service_worker": "background.bundle.js"
