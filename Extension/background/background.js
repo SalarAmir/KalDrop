@@ -1,14 +1,18 @@
 console.log("Background script initialized");
-
 const frontendDomain = "localhost";
 const authCookieName = "noar.auth";
+
 const initAuth = async () => {
-    const cookies = await chrome.cookies.getAll({ name:authCookieName});
+    // supabase= createClient(process.env.SUPABASE_URL, process.env.SUPABASE_API_KEY);
+    const cookies = await chrome.cookies.getAll({
+        name:authCookieName,
+        domain:frontendDomain
+    });
     if(cookies.length === 0){
         console.log('[initAuth] No auth cookie found.');
         return;
     }
-    // console.log('[initSupabase] Found cookie:', cookies);
+    
     //convert to json obj:
     const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
     // const authObj = decodeURIComponent(cookies[0].value);
@@ -18,7 +22,6 @@ const initAuth = async () => {
     StorageService.set('auth_token', authToken);
 };
 initAuth();
-
 class StorageService {
     static get(key) {
         console.log(`[StorageService.get] Fetching key: ${key}`);
@@ -49,15 +52,117 @@ class StorageService {
             });
         });
     }
+
+    static async addProductToArray(product) {
+        const products = await this.get('extractedProducts') || [];
+        const isDuplicate = products.some(p => p.title === product.title);
+        
+        if (!isDuplicate) {
+            products.push(product);
+            await this.set('extractedProducts', products);
+            await this.set('lastExtractedProduct', product);
+            return true;
+        }
+        return false;
+    }
+
+    static async getLatestProduct() {
+        return await this.get('lastExtractedProduct');
+    }
+}
+
+class API {
+	static serverUrl = process.env.SERVER_URL;
+	// static serverUrl = 'http://localhost:5000/api/v1';
+    static async createHeaders() {
+        const token = await StorageService.get('auth_token');
+        if (!token) {
+            console.error('No token found.');
+            throw new Error('No token found.');
+            // return;
+        }
+        const headers =  {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        };
+        console.log('[API.createHeaders] Headers:', headers);
+        return headers;
+    }
+
+    static async handleResponse(response) {
+        if (!response.ok) {
+            const data = await response.json();
+            if(data.statusCode === 401){
+                console.error('Unauthorized. Clearing auth token.');
+                await StorageService.remove('auth_token');
+            }
+            console.error('API Error:', data);
+            throw new Error(data.error);
+        }
+        return response.json();
+    }
+
+	static async get(url) {
+		try {
+			const completeUrl = `${API.serverUrl}${url}`;
+
+			const response = await fetch(completeUrl, {
+				method: 'GET',
+				headers: this.createHeaders(),
+			});
+			const data = await this.handleResponse(response);
+
+			// if(!data.success){
+			// 	console.error("GET", completeUrl, "Error:", data.error);
+			// 	throw new Error(data.error);
+			// }
+
+			console.log(
+				"GET",
+				completeUrl,
+				"Response:",
+				data
+			)
+
+			return data;
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	static async post(url, body) {
+		try {
+            
+			const completeUrl = `${this.serverUrl}${url}`;
+            console.log("POST", completeUrl, "Body:", JSON.stringify(body));
+			const response = await fetch(completeUrl, {
+				method: 'POST',
+				headers: await this.createHeaders(),
+				body: JSON.stringify(body),
+			});
+            const data = await this.handleResponse(response);
+
+			console.log(
+				"POST",
+				completeUrl,
+				"Response:",
+				data
+			)
+
+			return data;
+		} catch (err) {
+			console.error(err);
+            throw err;
+		}
+	}
 }
 
 async function extractProductService(request) {
     try {
         console.log('[extractProductService] Started with request:', request);
-        console.log('[extractProductService] Storing extracted product data:', request.data);
-        await StorageService.set('lastExtractedProduct', request.data);
-        console.log('[extractProductService] Product data saved successfully.');
-		const lastProd = await StorageService.get("lastExtractedProduct");
+        const wasAdded = await StorageService.addProductToArray(request.data);
+        console.log('[extractProductService] ', wasAdded?'new product added':'duplicate product skipped');
+		const lastProd = await StorageService.getLatestProduct();
 		console.log("[extractProductService] in local: ",lastProd);
 
         return {success:true, data:request.data};
@@ -67,10 +172,32 @@ async function extractProductService(request) {
     }
 }
 
+async function saveProductService(request) {
+    try {
+        /*
+        request:
+        {
+            action: 'saveProduct',
+            index: 0
+        }
+        */
+        console.log('[saveProductService] Started with request:', request);
+        const product = (await StorageService.get('extractedProducts'))[request.index];
+        console.log('[saveProductService] Product to save:', product);
+        const response = await API.post('/products', product);
+        console.log('[saveProductService] Product saved successfully:', response);
+        return {success:true, data:product};
+    }
+    catch(error){
+        console.error('[saveProductService] Error:', error);
+        throw error;
+    }
+};
+
 async function createListingService() {
     const currentListingService = new ListingService();
     try{
-        const lastProd = await StorageService.get("lastExtractedProduct");
+        const lastProd = await StorageService.getLatestProduct();
         console.log("[createListingService] in local: ",lastProd);
         await currentListingService.startListingProcess(lastProd);
         console.log("[createListingService] Listing finished successfully.");
@@ -288,6 +415,7 @@ class tabCommunication{
 const actionToServiceMap = {
     'extractProduct': extractProductService,
     'listProduct': createListingService,
+    'saveProduct': saveProductService,
 };
 
 // Debugging helper to log all available actions
@@ -336,6 +464,7 @@ chrome.cookies.onChanged.addListener(async (changeInfo) => {
 
     const cookieToken = JSON.parse(decodeURIComponent(changeInfo.cookie.value)).access_token;
     const currentToken = await StorageService.get('auth_token');
+    // const umm = await supabase.auth.getUser(cookieToken);
     if(!currentToken){
         console.log('[onCookieChanged] No current token found. Setting local storage.');
         await StorageService.set('auth_token', cookieToken);

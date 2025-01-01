@@ -7,6 +7,7 @@ export class AliExpressScraper {
     console.log('Scraping product data...');
     try {
       const data = {
+        url:this.getUrl(),
         title: this.getTitle(),
         descriptionImages: this.getDescriptionImages(), // Replaced description with descriptionImages
         price: this.getPrice(),
@@ -30,7 +31,11 @@ export class AliExpressScraper {
       return { success: false, error: error.message };
     }
   }
-
+  getUrl() {
+    const fullUrl = window.location.href;
+    const strippedUrl = fullUrl.split('?')[0];
+    return strippedUrl;
+  }
   getTitle() {
     const titleElement = document.querySelector('[data-pl="product-title"]');
     if (!titleElement) throw new Error('Title not found');
@@ -167,9 +172,9 @@ export class AliExpressScraper {
     const profit = sellingPrice - basePrice - fees;
 
     return {
-      sellingPrice: sellingPrice.toFixed(2),
-      estimatedProfit: profit.toFixed(2),
-      fees: fees.toFixed(2),
+      sellingPrice: parseFloat(sellingPrice.toFixed(2)),
+      estimatedProfit: parseFloat(profit.toFixed(2)),
+      fees: parseFloat(fees.toFixed(2)),
     };
   }
 }

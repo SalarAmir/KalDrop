@@ -8,7 +8,8 @@ module.exports = {
     popup: './Extension/popup/popup.js',
     login: './Extension/popup/login.js',
     content: './Extension/content/content.js',
-    background: './Extension/background/background.js'
+    background: './Extension/background/background.js',
+    manage: './Extension/popup/manage.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

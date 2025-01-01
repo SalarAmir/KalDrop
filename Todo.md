@@ -1,30 +1,41 @@
 - Extension (Automation + Scrapping)
     automation side
-        selecting suggested (next)
+        selecting suggested ABD
 
     scrapping side
-        images fix (next)
+        images fix DONE
         description images (next)
+        fix random ass prices (eh)
+        fix shipping (eh)
     frontend
         popup with form and confirm button DONE
-
-        login (later)
+        login DONE
     
     scrapper (content)->popup -> background -> local DONE
     local -> lister DONE
 
-    background -> server (zroori) ABDULLAH
+    background -> server (zroori) ABDULLAH ALMOST
+
 
 -Server
-    -user apis GET SALAR
-    -product apis GET SALAR
--Dashboard
-    -connect with server SALAR
+    -user apis GET SALAR DONE
+    -product apis GET SALAR DONE
 
-- Database (Users)
+-Database
+
+-Dashboard
+    -connect with server SALAR DONE
+
 - Payment (API)
-- Login/Signup (Backend)
-- Security 
+- Security DONE
+
+DB - product table
+DB - user listings table
+SERVER - Revamp apis according to new tables and auth
+
+Extension - all api shit
+Dashboard - all api shit
+Uploader option
 
 
 Descriptions:

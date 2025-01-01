@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async() => {
-    const {auth_token:authToken} =await chrome.storage.local.get('auth_token');
+  
+  const {auth_token:authToken} =await chrome.storage.local.get('auth_token');
     console.log('authToken:', authToken);
     if(!authToken){
       
@@ -8,21 +9,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     }
     console.log('new Popup loaded');
     const extractBtn = document.getElementById('extractBtn');
-    const listBtn = document.getElementById('listBtn');
     const profitInfo = document.getElementById('profitInfo');
-    const status = document.getElementById('status');
+    const listBtn = document.getElementById('listBtn');
+    const manageBtn = document.getElementById('manageBtn');
     const dashboardBtn = document.getElementById('dashboardBtn');
+    const status = document.getElementById('status');
     let currentProductData = null;
     
-    dashboardBtn.addEventListener('click', async () => {
-      // await chrome.storage.local.remove('auth_token');
-      // window.location.href = 'popup_login.html';
-      chrome.tabs.create({
-        url: process.env.DASHBOARD_URL + '/login'
-      });
-      
-    });
-
     extractBtn.addEventListener('click', async () => {
       try {
         status.textContent = 'Extracting product data...';
@@ -44,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         status.className = 'error';
       }
     });
-  
+    
     listBtn.addEventListener('click', async () => {
       try {
         status.textContent = 'Creating eBay listing...';
@@ -64,8 +57,19 @@ document.addEventListener('DOMContentLoaded', async() => {
         status.className = 'error';
       }
     });
-  
+    
+    manageBtn.addEventListener('click', async () => {
+      window.location.href = 'manage.html';
+    });
+
+    dashboardBtn.addEventListener('click', async () => {
+      chrome.tabs.create({
+        url: process.env.DASHBOARD_URL + '/login'
+      });
+    });
+    
     function displayProfitInfo(data) {
+      console.log('displayProfitInfo:', data);
       document.getElementById('costPrice').textContent = `$${data.price}`;
       document.getElementById('sellingPrice').textContent = `$${data.sellingPrice}`;
       document.getElementById('profit').textContent = `$${data.estimatedProfit}`;
