@@ -194,74 +194,142 @@ async function saveProductService(request) {
     }
 };
 
-async function createListingService() {
-    const currentListingService = new ListingService();
-    try{
-        const lastProd = await StorageService.getLatestProduct();
-        console.log("[createListingService] in local: ",lastProd);
-        await currentListingService.startListingProcess(lastProd);
+
+async function createListingService(request) {
+    /*
+    request:{
+        action: 'listProduct',
+        index: 0
+        }
+        */
+       const currentListingService = new ListingService();
+       try{
+           
+           console.log('[createListingService] Started with request:', request);
+           let prodToList;
+           if(request.index === undefined){
+               prodToList = await StorageService.getLatestProduct();
+            }else{
+                prodToList = (await StorageService.get('extractedProducts'))[request.index];
+            }
+            await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
-        return {success:true, data:lastProd};
+        return {success:true, data:prodToList};
     }
     catch(error){
         console.error('[createListingService] Error:', error);
         throw error;
-
+        
     }
 }
 
 class ListingService{
     
     /*
-        productData:{
-            "title":"",
-            "description": "",
-            "price": ,
-            "images": [],
-            "categoryId": "",
-            "listingOptions": {
-                "requireImmediatePayment": true,
-                "quantity": 5,
-                "allowOffers": true
+    productData:{
+        "title":"",
+        "description": "",
+        "price": ,
+        "images": [],
+        "categoryId": "",
+        "listingOptions": {
+            "requireImmediatePayment": true,
+            "quantity": 5,
+            "allowOffers": true
             }
-        }
-    */
+            }
+            */
 
-    constructor(){
-        //define actions sequence as list of functions
+    constructor() {
         this.processing = false;
         this.listingTabId = null;
         this.productData = null;
 
+        // Define required and optional actions separately
+        // this.requiredActions = [
+        //     { func: this.clickListButton, name: 'clickListButton' },
+        //     { func: this.fillTitle, name: 'fillTitle' },
+        //     { func: this.fillImages, name: 'fillImages' },
+        // ];
+
+        // this.optionalActions = [
+        //     { func: this.selectCategory, name: 'selectCategory' },
+        //     { func: this.selectCondition, name: 'selectCondition' },
+        // ];
+
         this.actions = [
-            // this.navigateToSellPage,
-            (productData)=>this.clickListButton(productData),
-            (productData)=>this.fillTitle(productData),
-            (productData)=>this.selectCategory(productData),
-            (productData)=>this.selectCondition(productData),
-            (productData)=>this.fillImages(productData),
+            {func:this.clickListButton, name:'clickListButton', type:"required"},
+            {func:this.fillTitle, name:'fillTitle', type:"required"},
+            {func:this.selectCategory, name:'selectCategory', type:"optional"},
+            {func:this.selectCondition, name:'selectCondition', type:"optional"},
+            {func:this.fillImages, name:'fillImages', type:"required"},
         ];
     }
 
-    async startListingProcess(productData){
-        if(this.processing){
+    async startListingProcess(productData) {
+        if (this.processing) {
             console.log('[ListingService] A listing process is already running. Ignoring this request.');
             return;
         }
         this.processing = true;
+
         console.log('[ListingService] Started with product data:', productData);
-        const newTab = await chrome.tabs.create({
-            url: 'https://www.ebay.com/sell/create',
-            active: true,
-        })
-        console.log('[ListingService] New tab created with ID:', newTab.id);
-        this.listingTabId = newTab.id;
         try {
-            for (const action of this.actions) {
-                console.log('[ListingService] Executing action:', action.name);
-                console.log(this.listingTabId);
-                await action(productData);
+            const newTab = await chrome.tabs.create({
+                url: 'https://www.ebay.com/sell/create',
+                active: true,
+            });
+            console.log('[ListingService] New tab created with ID:', newTab.id);
+            this.listingTabId = newTab.id;
+
+            for(const action of this.actions){
+                if(action.type === "required"){
+                    console.log(`[ListingService] Executing required action: ${action.name}`);
+                    const result = await action.func.call(this, productData);
+                    if (!result.success) {
+                        if (result.error instanceof ElementNotFoundError) {
+                            throw new Error(`Required element not found in ${action.name}: ${result.error.message}`);
+                        }
+                        throw result.error;
+                    }
+                }
+                else if(action.type === "optional"){
+                    console.log(`[ListingService] Executing optional action: ${action.name}`);
+                    const result = await action.func.call(this, productData);
+                    if (!result.success) {
+                        if (result.error instanceof ElementNotFoundError) {
+                            console.log(`[ListingService] Skipping optional action ${action.name} due to missing element: ${result.error.message}`);
+                            continue;
+                        }
+                        throw result.error;
+                    }
+                }
             }
+
+            // Execute required actions
+            // for (const action of this.requiredActions) {
+            //     console.log(`[ListingService] Executing required action: ${action.name}`);
+            //     const result = await action.func.call(this, productData);
+            //     if (!result.success) {
+            //         if (result.error instanceof ElementNotFoundError) {
+            //             throw new Error(`Required element not found in ${action.name}: ${result.error.message}`);
+            //         }
+            //         throw result.error;
+            //     }
+            // }
+
+            // // Execute optional actions
+            // for (const action of this.optionalActions) {
+            //     console.log(`[ListingService] Executing optional action: ${action.name}`);
+            //     const result = await action.func.call(this, productData);
+            //     if (!result.success) {
+            //         if (result.error instanceof ElementNotFoundError) {
+            //             console.log(`[ListingService] Skipping optional action ${action.name} due to missing element: ${result.error.message}`);
+            //             continue;
+            //         }
+            //         throw result.error;
+            //     }
+            // }
         } catch (error) {
             console.error('[ListingService] Error:', error);
             throw error;
@@ -275,11 +343,15 @@ class ListingService{
         const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action: 'clickElement',
             selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
-        })
+        });
+        if(!response.success){
+            return response;
+        }
+
         console.log('[ListingService] List button clicked successfully:', response);
-
+        return { success: true };
     }
-
+    
     async fillTitle(productData){
         console.log('[ListingService] Filling title:', productData.title);
         console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
@@ -288,14 +360,21 @@ class ListingService{
             selector:'#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
             value: productData.title,
         });
+        if(!response.success){
+            return response;
+        }
         console.log('[ListingService] Title filled successfully:', response);
         const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action: 'clickElement',
             selector:'#mainContent > div > div > div.keyword-suggestion > button',
         });
+        if(!responseClick.success){
+            return responseClick;
+        }
         console.log('[ListingService] Clicked on suggested title:', responseClick);
+        return { success: true };
     }
-
+    
     async selectCategory(productData){
         console.log("[ListingService] Looking for category popup:")
         const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
@@ -303,22 +382,30 @@ class ListingService{
             selector: '#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker',
         })
         if(!response.success){
-            console.log("[ListingService] Category popup not found. Continuing..")
-            return;
+            // console.log("[ListingService] Category popup not found. Continuing..")
+            return response;
         }
         console.log("[ListingService] Category popup found. Selecting category..")
         const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action :'clickElement',
             selector:'#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker > div > div.se-panel-container__body > div > div.se-panel-section.category-picker__suggested-section > div:nth-child(2) > button > span > span > span'
         })
+        if(!responseClick.success){
+            return responseClick;
+        }
         console.log("[ListingService] Category selected successfully.")
         console.log("[ListingService] Clicking without match button.");
         const responseClickWithoutMatch = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action :'clickElement',
             selector:'#mainContent > div > div > div.prelist-radix__next-container > button'
         })
+        if(!responseClickWithoutMatch.success){
+            return responseClickWithoutMatch;
+        }
+        console.log("[ListingService] Clicked without match button.")
+        return { success: true };
     }
-
+    
     async selectCondition(productData){
         console.log("[ListingService] Looking for condition popup..")
         const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
@@ -327,8 +414,9 @@ class ListingService{
         })
         if(!response.success){
             console.log("[ListingService] Condition popup not found. Continuing..")
-            return;
+            return response;
         }
+
         console.log("[ListingService] Condition popup found. Selecting condition..")
         const respOptionSelect = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action: 'selectOption',
@@ -336,15 +424,22 @@ class ListingService{
             text: 'New with box',
             index: 0
         })
+        if(!respOptionSelect.success){
+            return respOptionSelect;
+        }
         console.log("[ListingService] Condition selected successfully.")
         //continue listing button:
         const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action :'clickElement',
             selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.condition-dialog-non-block-radix__continue > button'
         })
+        if(!responseClick.success){
+            return responseClick;
+        }
         console.log("[ListingService] Clicked on continue button.")
+        return { success: true };
     }
-
+    
     async fillImages(productData){
         console.log('[ListingService] Filling images:', productData.images);
         const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
@@ -352,63 +447,77 @@ class ListingService{
             selector:'#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__photos.summary__photos-image-guidance.summary__photos--photo-framework > div:nth-child(2) > div > div.uploader-ui.empty > div:nth-child(1) > div.uploader-thumbnails-ux.uploader-thumbnails-ux--inline.uploader-thumbnails-ux--inline-edit > div',
             images: productData.images,
         });
-        console.log('[ListingService] Images filled successfully:', response);
-    }
-}
-
-async function waitForTabLoad(tabId, timeout = 15000) {
-    console.log(`[waitForTabLoad] Waiting for tab ID ${tabId} to load...`);
-    return new Promise((resolve, reject) => {
-        const startTime = Date.now();
-
-        const checkTab = () => {
-            chrome.tabs.get(tabId, (tab) => {
-                if (chrome.runtime.lastError) {
-                    return reject(new Error('Tab no longer exists'));
-                }
-                if (tab.status === 'complete') {
-                    console.log(`[waitForTabLoad] Tab ID ${tabId} has loaded.`);
-                    return resolve();
-                }
-                if (Date.now() - startTime > timeout) {
-                    return reject(new Error('Tab load timeout exceeded'));
-                }
-                setTimeout(checkTab, 500);
-            });
-        };
-
-        checkTab();
-    });
-}
-
-// Communication services
-class tabCommunication{
-    static async sendMessage(tabId, message) {
-        const response = await chrome.tabs.sendMessage(tabId, message);
-        if(!response){
-            throw new Error('No response from content script');
-        }
         if(!response.success){
-            throw new Error(response.error || 'Content script failed to process message');
+            return response;
         }
-        return response;
+        console.log('[ListingService] Images filled successfully:', response);
+        return { success: true };
+    }
+}
+
+class ContentScriptError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ContentScriptError';
+    }
+}
+
+class ElementNotFoundError extends Error {
+    constructor(selector) {
+        super(`Element not found: ${selector}`);
+        this.name = 'ElementNotFoundError';
+        this.selector = selector;
+    }
+}
+
+// Communication services:
+class tabCommunication {
+    static async sendMessage(tabId, message) {
+        try {
+            const response = await chrome.tabs.sendMessage(tabId, message);
+            if (!response) {
+                throw new ContentScriptError('No response from content script');
+            }
+            if (!response.success) {
+                if (response.error && response.error.includes('Element not found')) {
+                    throw new ElementNotFoundError(message.selector);
+                }
+                throw new Error(response.error || 'Content script failed to process message');
+            }
+            return response;
+        } catch (error) {
+            if (error.message.includes('Receiving end does not exist')) {
+                throw new ContentScriptError('Content script not loaded');
+            }
+            throw error; // Re-throw other errors
+        }
     }
 
-    static async sendMessageRetries(tabId, message, maxRetries = 3, retryDelay = 2000) {
+    static async sendMessageRetries(tabId, message, maxRetries = 5, retryDelay = 2000) {
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
                 return await this.sendMessage(tabId, message);
             } catch (error) {
-                console.warn(`Attempt ${attempt+1} failed:`, error);
-                if (attempt >= maxRetries) {
-                    // throw error;
-                    return {success:false, error:error.toString()};
+                const isLastAttempt = attempt >= maxRetries;
+                const errorType = error instanceof ContentScriptError ? 'Content Script Error' :
+                                error instanceof ElementNotFoundError ? 'Element Not Found' :
+                                'Unknown Error';
+                
+                console.warn(`Attempt ${attempt + 1}/${maxRetries + 1} failed - ${errorType}:`, error.message);
+
+                if (isLastAttempt) {
+                    return { success: false, error: error };
                 }
+
+                // Only retry for if not element not found error
+                if (error instanceof ElementNotFoundError) {
+                    return { success: false, error: error };
+                }
+
                 await new Promise(resolve => setTimeout(resolve, retryDelay));
             }
         }
     }
-
 }
 
 // Action to service mapping
