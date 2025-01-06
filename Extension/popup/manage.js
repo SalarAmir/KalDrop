@@ -1,3 +1,4 @@
+import './auth.js';
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Manage prod page loaded');
     const {extractedProducts} = await chrome.storage.local.get('extractedProducts');

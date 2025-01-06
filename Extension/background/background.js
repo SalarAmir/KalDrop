@@ -1,27 +1,83 @@
 console.log("Background script initialized");
-const frontendDomain = "localhost";
-const authCookieName = "noar.auth";
 
-const initAuth = async () => {
-    // supabase= createClient(process.env.SUPABASE_URL, process.env.SUPABASE_API_KEY);
-    const cookies = await chrome.cookies.getAll({
-        name:authCookieName,
-        domain:frontendDomain
-    });
-    if(cookies.length === 0){
-        console.log('[initAuth] No auth cookie found.');
-        return;
+class Auth{
+    constructor(){
+        this.frontendDomain = process.env.FRONTEND_DOMAIN;
+        this.authCookieName = process.env.AUTH_COOKIE_NAME;
+        if(!this.frontendDomain || !this.authCookieName){
+            console.error('[Auth] Environment variables not found. Using defaults.');
+            console.error('[Auth] FRONTEND_DOMAIN:', this.frontendDomain);
+            console.error('[Auth] AUTH_COOKIE_NAME:', this.authCookieName);
+        }
+
+        this.access_token = null
+        this.logged_in = false
+
+        this.initAuth().then(async () => {
+            await this.verifyToken();
+        })
+        chrome.cookies.onChanged.addListener(this.cookieChanged);
+        
     }
-    
-    //convert to json obj:
-    const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
-    // const authObj = decodeURIComponent(cookies[0].value);
-    const authToken = authObj.access_token;
+    async initAuth(){
+        const cookies = await chrome.cookies.getAll({
+            name:this.authCookieName,
+            domain:this.frontendDomain
+        });
+        if(cookies.length === 0){
+            console.log('[initAuth] No auth cookie found.');
+            return;
+        }
+        
+        //convert to json obj:
+        const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
+        console.log('[initAuth] Auth cookie found:', authObj);
+        // const authObj = decodeURIComponent(cookies[0].value);
+        const {access_token} = authObj;
+        console.log('[initAuth] Logged in user found:',authObj.user.email);
+        await StorageService.set('access_token', access_token);
+        this.access_token = access_token;
+        
+    }
 
-    console.log('[initAuth] Logged in user found:',authObj.user.email);
-    StorageService.set('auth_token', authToken);
-};
-initAuth();
+    async verifyToken(request=null){
+        const response = await API.get('/verify');
+        console.log('[verifyToken] Response:', response);
+        if(response.message !== "Authenticated"){
+            console.error('[verifyToken] Unauthorized. Clearing auth token.');
+            await StorageService.remove('access_token');
+            return {authenticated:false};
+        }
+        return {authenticated:true};
+
+    }
+
+    async cookieChanged(changeInfo){
+        if(changeInfo.cookie.domain !== this.frontendDomain) return;
+        if(changeInfo.cookie.name !== this.authCookieName) return;
+        
+        if(changeInfo.removed){
+            console.log('[onCookieChanged] Auth cookie removed. Clearing local storage.');
+            await StorageService.remove('access_token');
+            return;
+        }
+    
+        const {access_token:cookieToken} = JSON.parse(decodeURIComponent(changeInfo.cookie.value));
+        const currentToken = await StorageService.get('access_token');
+        // const umm = await supabase.auth.getUser(cookieToken);
+        if(!currentToken){
+            console.log('[onCookieChanged] No current token found. Setting local storage.');
+            await StorageService.set('access_token', cookieToken);
+        }
+        if(currentToken !== cookieToken){
+            console.log('[onCookieChanged] Token changed. Updating local storage.');
+            await StorageService.set('access_token', cookieToken);
+        }
+    }
+}
+const auth = new Auth();
+auth.initAuth();
+
 class StorageService {
     static get(key) {
         console.log(`[StorageService.get] Fetching key: ${key}`);
@@ -75,7 +131,7 @@ class API {
 	static serverUrl = process.env.SERVER_URL;
 	// static serverUrl = 'http://localhost:5000/api/v1';
     static async createHeaders() {
-        const token = await StorageService.get('auth_token');
+        const token = await StorageService.get('access_token');
         if (!token) {
             console.error('No token found.');
             throw new Error('No token found.');
@@ -94,7 +150,7 @@ class API {
             const data = await response.json();
             if(data.statusCode === 401){
                 console.error('Unauthorized. Clearing auth token.');
-                await StorageService.remove('auth_token');
+                await StorageService.remove('access_token');
             }
             console.error('API Error:', data);
             throw new Error(data.error);
@@ -108,7 +164,7 @@ class API {
 
 			const response = await fetch(completeUrl, {
 				method: 'GET',
-				headers: this.createHeaders(),
+				headers: await this.createHeaders(),
 			});
 			const data = await this.handleResponse(response);
 
@@ -127,6 +183,7 @@ class API {
 			return data;
 		} catch (err) {
 			console.error(err);
+            return {success:false, error:err.toString()};
 		}
 	}
 
@@ -152,7 +209,8 @@ class API {
 			return data;
 		} catch (err) {
 			console.error(err);
-            throw err;
+            return {success:false, error:err.toString()};
+            // throw err;
 		}
 	}
 }
@@ -525,6 +583,7 @@ const actionToServiceMap = {
     'extractProduct': extractProductService,
     'listProduct': createListingService,
     'saveProduct': saveProductService,
+    'verifyAuth': auth.verifyToken
 };
 
 // Debugging helper to log all available actions
@@ -558,28 +617,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
 
     return true; // Allow asynchronous response
-});
-
-
-chrome.cookies.onChanged.addListener(async (changeInfo) => {
-    if(changeInfo.cookie.domain !== frontendDomain) return;
-    if(changeInfo.cookie.name !== authCookieName) return;
-    
-    if(changeInfo.removed){
-        console.log('[onCookieChanged] Auth cookie removed. Clearing local storage.');
-        await StorageService.remove('auth_token');
-        return;
-    }
-
-    const cookieToken = JSON.parse(decodeURIComponent(changeInfo.cookie.value)).access_token;
-    const currentToken = await StorageService.get('auth_token');
-    // const umm = await supabase.auth.getUser(cookieToken);
-    if(!currentToken){
-        console.log('[onCookieChanged] No current token found. Setting local storage.');
-        await StorageService.set('auth_token', cookieToken);
-    }
-    if(currentToken !== cookieToken){
-        console.log('[onCookieChanged] Token changed. Updating local storage.');
-        await StorageService.set('auth_token', cookieToken);
-    }
 });

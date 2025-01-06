@@ -33,7 +33,7 @@ DB - product table
 DB - user listings table
 SERVER - Revamp apis according to new tables and auth
 
-Extension - all api shit
+Extension - all api shit 
 Dashboard - all api shit
 Uploader option
 

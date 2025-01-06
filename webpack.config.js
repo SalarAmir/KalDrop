@@ -9,7 +9,8 @@ module.exports = {
     login: './Extension/popup/login.js',
     content: './Extension/content/content.js',
     background: './Extension/background/background.js',
-    manage: './Extension/popup/manage.js'
+    manage: './Extension/popup/manage.js',
+    auth: './Extension/popup/auth.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
