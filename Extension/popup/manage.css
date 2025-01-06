@@ -1,0 +1,22 @@
+.btn-group {
+    display: flex;
+    gap: var(--spacing-unit);
+    flex-wrap: wrap;
+}
+
+.btn--small {
+    padding: calc(var(--spacing-unit) * 0.75) var(--spacing-unit);
+    font-size: 0.75rem;
+}
+
+.btn--list {
+    background-color: var(--primary-color);
+}
+
+.btn--delete {
+    background-color: var(--error-color);
+}
+
+.btn--save {
+    background-color: var(--success-color);
+}

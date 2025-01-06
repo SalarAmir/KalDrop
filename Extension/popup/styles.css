@@ -13,7 +13,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  width: 320px;
+  width: 420px;
   padding: calc(var(--spacing-unit) * 2);
   background-color: var(--background-color);
   color: var(--text-primary);
@@ -142,7 +142,7 @@ body {
 }
 
 /* Action Buttons */
-.btn-group {
+/* .btn-group {
   display: flex;
   gap: var(--spacing-unit);
 }
@@ -162,4 +162,4 @@ body {
 
 .btn--save {
   background-color: var(--success-color);
-}
+} */

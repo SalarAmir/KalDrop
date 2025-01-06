@@ -1,22 +1,22 @@
 console.log("Background script initialized");
-
+import ProductService from "./productService.js";
+import API from "./API.js";
+import StorageService from "./storageService.js";
 class Auth{
     constructor(){
         this.frontendDomain = process.env.FRONTEND_DOMAIN;
         this.authCookieName = process.env.AUTH_COOKIE_NAME;
         if(!this.frontendDomain || !this.authCookieName){
-            console.error('[Auth] Environment variables not found. Using defaults.');
+            console.error('[Auth] Environment variables not found');
             console.error('[Auth] FRONTEND_DOMAIN:', this.frontendDomain);
             console.error('[Auth] AUTH_COOKIE_NAME:', this.authCookieName);
         }
-
         this.access_token = null
         this.logged_in = false
 
         this.initAuth().then(async () => {
             await this.verifyToken();
         })
-        chrome.cookies.onChanged.addListener(this.cookieChanged);
         
     }
     async initAuth(){
@@ -55,7 +55,6 @@ class Auth{
     async cookieChanged(changeInfo){
         if(changeInfo.cookie.domain !== this.frontendDomain) return;
         if(changeInfo.cookie.name !== this.authCookieName) return;
-        
         if(changeInfo.removed){
             console.log('[onCookieChanged] Auth cookie removed. Clearing local storage.');
             await StorageService.remove('access_token');
@@ -77,158 +76,8 @@ class Auth{
 }
 const auth = new Auth();
 auth.initAuth();
+chrome.cookies.onChanged.addListener((changeInfo)=>auth.cookieChanged(changeInfo));
 
-class StorageService {
-    static get(key) {
-        console.log(`[StorageService.get] Fetching key: ${key}`);
-        return new Promise((resolve) => {
-            chrome.storage.local.get([key], function (result) {
-                console.log(`[StorageService.get] Result for ${key}:`, result[key]);
-                resolve(result[key]);
-            });
-        });
-    }
-
-    static set(key, value) {
-        console.log(`[StorageService.set] Setting key: ${key} with value:`, value);
-        return new Promise((resolve) => {
-            chrome.storage.local.set({ [key]: value }, function () {
-                console.log(`[StorageService.set] Successfully set ${key} to`, value);
-                resolve();
-            });
-        });
-    }
-
-    static remove(key) {
-        console.log(`[StorageService.remove] Removing key: ${key}`);
-        return new Promise((resolve) => {
-            chrome.storage.local.remove(key, function () {
-                console.log(`[StorageService.remove] Successfully removed ${key}`);
-                resolve();
-            });
-        });
-    }
-
-    static async addProductToArray(product) {
-        const products = await this.get('extractedProducts') || [];
-        const isDuplicate = products.some(p => p.title === product.title);
-        
-        if (!isDuplicate) {
-            products.push(product);
-            await this.set('extractedProducts', products);
-            await this.set('lastExtractedProduct', product);
-            return true;
-        }
-        return false;
-    }
-
-    static async getLatestProduct() {
-        return await this.get('lastExtractedProduct');
-    }
-}
-
-class API {
-	static serverUrl = process.env.SERVER_URL;
-	// static serverUrl = 'http://localhost:5000/api/v1';
-    static async createHeaders() {
-        const token = await StorageService.get('access_token');
-        if (!token) {
-            console.error('No token found.');
-            throw new Error('No token found.');
-            // return;
-        }
-        const headers =  {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        };
-        console.log('[API.createHeaders] Headers:', headers);
-        return headers;
-    }
-
-    static async handleResponse(response) {
-        if (!response.ok) {
-            const data = await response.json();
-            if(data.statusCode === 401){
-                console.error('Unauthorized. Clearing auth token.');
-                await StorageService.remove('access_token');
-            }
-            console.error('API Error:', data);
-            throw new Error(data.error);
-        }
-        return response.json();
-    }
-
-	static async get(url) {
-		try {
-			const completeUrl = `${API.serverUrl}${url}`;
-
-			const response = await fetch(completeUrl, {
-				method: 'GET',
-				headers: await this.createHeaders(),
-			});
-			const data = await this.handleResponse(response);
-
-			// if(!data.success){
-			// 	console.error("GET", completeUrl, "Error:", data.error);
-			// 	throw new Error(data.error);
-			// }
-
-			console.log(
-				"GET",
-				completeUrl,
-				"Response:",
-				data
-			)
-
-			return data;
-		} catch (err) {
-			console.error(err);
-            return {success:false, error:err.toString()};
-		}
-	}
-
-	static async post(url, body) {
-		try {
-            
-			const completeUrl = `${this.serverUrl}${url}`;
-            console.log("POST", completeUrl, "Body:", JSON.stringify(body));
-			const response = await fetch(completeUrl, {
-				method: 'POST',
-				headers: await this.createHeaders(),
-				body: JSON.stringify(body),
-			});
-            const data = await this.handleResponse(response);
-
-			console.log(
-				"POST",
-				completeUrl,
-				"Response:",
-				data
-			)
-
-			return data;
-		} catch (err) {
-			console.error(err);
-            return {success:false, error:err.toString()};
-            // throw err;
-		}
-	}
-}
-
-async function extractProductService(request) {
-    try {
-        console.log('[extractProductService] Started with request:', request);
-        const wasAdded = await StorageService.addProductToArray(request.data);
-        console.log('[extractProductService] ', wasAdded?'new product added':'duplicate product skipped');
-		const lastProd = await StorageService.getLatestProduct();
-		console.log("[extractProductService] in local: ",lastProd);
-
-        return {success:true, data:request.data};
-    } catch (error) {
-        console.error('[extractProductService] Error:', error);
-        return {success:false, error:error.toString()};
-    }
-}
 
 async function saveProductService(request) {
     try {
@@ -363,31 +212,6 @@ class ListingService{
                     }
                 }
             }
-
-            // Execute required actions
-            // for (const action of this.requiredActions) {
-            //     console.log(`[ListingService] Executing required action: ${action.name}`);
-            //     const result = await action.func.call(this, productData);
-            //     if (!result.success) {
-            //         if (result.error instanceof ElementNotFoundError) {
-            //             throw new Error(`Required element not found in ${action.name}: ${result.error.message}`);
-            //         }
-            //         throw result.error;
-            //     }
-            // }
-
-            // // Execute optional actions
-            // for (const action of this.optionalActions) {
-            //     console.log(`[ListingService] Executing optional action: ${action.name}`);
-            //     const result = await action.func.call(this, productData);
-            //     if (!result.success) {
-            //         if (result.error instanceof ElementNotFoundError) {
-            //             console.log(`[ListingService] Skipping optional action ${action.name} due to missing element: ${result.error.message}`);
-            //             continue;
-            //         }
-            //         throw result.error;
-            //     }
-            // }
         } catch (error) {
             console.error('[ListingService] Error:', error);
             throw error;
@@ -580,10 +404,10 @@ class tabCommunication {
 
 // Action to service mapping
 const actionToServiceMap = {
-    'extractProduct': extractProductService,
+    'extractProduct': (request) => ProductService.extractProduct(request),
     'listProduct': createListingService,
     'saveProduct': saveProductService,
-    'verifyAuth': auth.verifyToken
+    'verifyAuth': (request) => auth.verifyToken(request)
 };
 
 // Debugging helper to log all available actions
