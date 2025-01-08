@@ -2,6 +2,11 @@ console.log("Background script initialized");
 import ProductService from "./productService.js";
 import API from "./API.js";
 import StorageService from "./storageService.js";
+
+//clear products:
+// StorageService.remove('extractedProducts');
+
+
 class Auth{
     constructor(){
         this.frontendDomain = process.env.FRONTEND_DOMAIN;
@@ -78,7 +83,6 @@ const auth = new Auth();
 auth.initAuth();
 chrome.cookies.onChanged.addListener((changeInfo)=>auth.cookieChanged(changeInfo));
 
-
 async function saveProductService(request) {
     try {
         /*
@@ -101,25 +105,25 @@ async function saveProductService(request) {
     }
 };
 
-
 async function createListingService(request) {
     /*
     request:{
         action: 'listProduct',
-        index: 0
+        id: 
         }
-        */
-       const currentListingService = new ListingService();
-       try{
-           
-           console.log('[createListingService] Started with request:', request);
-           let prodToList;
-           if(request.index === undefined){
-               prodToList = await StorageService.getLatestProduct();
-            }else{
-                prodToList = (await StorageService.get('extractedProducts'))[request.index];
-            }
-            await currentListingService.startListingProcess(prodToList);
+    */
+    const currentListingService = new ListingService();
+    try{
+        
+        console.log('[createListingService] Started with request:', request);
+        let prodToList;
+        if(request.id === undefined){
+            prodToList = await StorageService.getLatestProduct();
+        }else{
+            prodToList = await StorageService.getProductById(request.id);
+        }
+        console.log('[createListingService] Product to list:', prodToList);
+        await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
         return {success:true, data:prodToList};
     }
@@ -404,6 +408,8 @@ class tabCommunication {
 
 // Action to service mapping
 const actionToServiceMap = {
+    'getProduct': (request) => ProductService.getProduct(request),
+    'getAllProducts': (request) => ProductService.getProducts(request),
     'extractProduct': (request) => ProductService.extractProduct(request),
     'listProduct': createListingService,
     'saveProduct': saveProductService,

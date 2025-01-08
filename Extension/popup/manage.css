@@ -17,6 +17,6 @@
     background-color: var(--error-color);
 }
 
-.btn--save {
+.btn--edit {
     background-color: var(--success-color);
 }

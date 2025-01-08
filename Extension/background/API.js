@@ -62,7 +62,7 @@ export default class API {
 
 	static async post(url, body) {
 		try {
-            
+			
 			const completeUrl = `${this.serverUrl}${url}`;
             console.log("POST", completeUrl, "Body:", JSON.stringify(body));
 			const response = await fetch(completeUrl, {

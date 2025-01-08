@@ -10,7 +10,8 @@ module.exports = {
     content: './Extension/content/content.js',
     background: './Extension/background/background.js',
     manage: './Extension/popup/manage.js',
-    auth: './Extension/popup/auth.js'
+    auth: './Extension/popup/auth.js',
+    edit_product: './Extension/popup/edit_product.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

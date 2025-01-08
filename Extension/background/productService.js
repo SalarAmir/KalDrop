@@ -30,5 +30,34 @@ export default class ProductService {
 			return {success:false, data:product}
 		}
 	}
+	static async getProducts(request){
+		try{
+			const data = await API.get('/products');
+			console.log("[getProductsService] api resp:", data);
+			await StorageService.appendToProductArray(data); 
+			return {success:true, data}
+		}
+		catch(err){
+			console.error("[getProductsService] error: ",err);
+			return {success:false, data:[]}
+		}
+	};
 
+	static async getProduct(request){
+		/*
+			request = {
+				action: 'getProduct',
+				id: 
+			}
+		*/
+		try{
+			const product = await StorageService.getProductById(request.id);
+			console.log("[getProductService] product:", product);
+			return {success:true, data:product}
+		}
+		catch(err){
+			console.error("[getProductService] error: ",err);
+			return {success:false, data:{}}
+		}
+	}
 }
