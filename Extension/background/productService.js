@@ -34,7 +34,8 @@ export default class ProductService {
 		try{
 			const data = await API.get('/products');
 			console.log("[getProductsService] api resp:", data);
-			await StorageService.appendToProductArray(data); 
+			// await StorageService.appendToProductArray(data);
+			await StorageService.set('extractedProducts', data);
 			return {success:true, data}
 		}
 		catch(err){
@@ -59,5 +60,25 @@ export default class ProductService {
 			console.error("[getProductService] error: ",err);
 			return {success:false, data:{}}
 		}
-	}
+	};
+
+	static async updateProduct(request){
+		/*
+			request = {
+				action: 'updateProduct',
+				id: 
+				data: 
+			}
+		*/
+		try{
+			console.log("[updateProductService] Request:", request);
+			const response = await API.put(`/products/${request.id}`, request.product);
+			console.log("[updateProductService] response:", response);
+			return {success:true, data:response.data}
+		}
+		catch(err){
+			console.error("[updateProductService] error: ",err);
+			return {success:false, data:request.data}
+		}
+	};
 }

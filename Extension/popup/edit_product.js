@@ -64,14 +64,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Back button handler
     const backBtn = document.getElementById('backBtn');
     backBtn.addEventListener('click', () => {
-        window.location.href = 'manage-products.html';
+        window.location.href = 'manage.html';
     });
 
     // Form submit handler (you'll implement this part)
     const form = document.getElementById('editProductForm');
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        // You'll implement the save functionality here
+        //all form fields:
+        const title = document.getElementById('title').value;
+        const price = document.getElementById('price').value;
+        const originalPrice = document.getElementById('originalPrice').value;
+        const sellingPrice = document.getElementById('sellingPrice').value;
+        const url = document.getElementById('url').value;
+        const supplier = document.getElementById('supplier').value;
+        const specifications = {};
+        const specificationItems = document.querySelectorAll('.specification-item');
+        specificationItems.forEach(item => {
+            const key = item.children[0].value;
+            const value = item.children[1].value;
+            specifications[key] = value;
+        });
+        const sizes = [];
+        const sizeItems = document.querySelectorAll('.size-item');
+        sizeItems.forEach(item => {
+            sizes.push({ value: item.children[0].value });
+        });
+        const colors = [];
+        const colorItems = document.querySelectorAll('.color-item');
+        colorItems.forEach(item => {
+            colors.push({ value: item.children[0].value });
+        });
+        const updatedProduct = {
+            title,
+            price,
+            originalPrice,
+            sellingPrice,
+            url,
+            supplier,
+            specifications,
+            variants: {
+                sizes,
+                colors
+            }
+        };
+        console.log('Updated product:', updatedProduct);
+
+        const resp = await chrome.runtime.sendMessage({
+            action: 'updateProduct',
+            id: productId,
+            product: updatedProduct
+        });
+
         console.log('Form submitted');
     });
 });

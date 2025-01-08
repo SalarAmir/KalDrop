@@ -86,4 +86,29 @@ export default class API {
             // throw err;
 		}
 	}
+
+	static async put(url, body) {
+		try {
+			const completeUrl = `${this.serverUrl}${url}`;
+			console.log("PUT", completeUrl, "Body:", JSON.stringify(body));
+			const response = await fetch(completeUrl, {
+				method: 'PUT',
+				headers: await this.createHeaders(),
+				body: JSON.stringify(body),
+			});
+			const data = await this.handleResponse(response);
+
+			console.log(
+				"PUT",
+				completeUrl,
+				"Response:",
+				data
+			)
+
+			return data;
+		} catch (err) {
+			console.error(err);
+			return {success:false, error:err.toString()};
+		}
+	}
 }

@@ -411,6 +411,7 @@ const actionToServiceMap = {
     'getProduct': (request) => ProductService.getProduct(request),
     'getAllProducts': (request) => ProductService.getProducts(request),
     'extractProduct': (request) => ProductService.extractProduct(request),
+    'updateProduct': (request) => ProductService.updateProduct(request),
     'listProduct': createListingService,
     'saveProduct': saveProductService,
     'verifyAuth': (request) => auth.verifyToken(request)
