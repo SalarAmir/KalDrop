@@ -14,20 +14,34 @@
     scrapper (content)->popup -> background -> local DONE
     local -> lister DONE
 
-    background -> server (zroori) ABDULLAH ALMOST
+    background -> server (zroori) ABDULLAH DONE
 
 
 -Server
     -user apis GET SALAR DONE
     -product apis GET SALAR DONE
+    -payment
+        GET subscription by user id SALAR make api in an hour  
+    -webhooks
+        -transaction.completed ABD DONE
+        -subscription.created ABD in an hour
+        -subscription.updated ABD in an hour
 
 -Database
 
 -Dashboard
     -connect with server SALAR DONE
+    -Subscription status SALAR using Get subscription
+    -signup page 
+    pages:
+        pyaara krou SALAR
+-paddle dashboard
+    -trial period
 
 - Payment (API)
 - Security DONE
+
+-
 
 DB - product table
 DB - user listings table
