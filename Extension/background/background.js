@@ -87,10 +87,10 @@ async function saveProductService(request) {
     try {
         /*
         request:
-        {
-            action: 'saveProduct',
-            index: 0
-        }
+            {
+                action: 'saveProduct',
+                index: 0
+            }
         */
         console.log('[saveProductService] Started with request:', request);
         const product = (await StorageService.get('extractedProducts'))[request.index];
@@ -105,14 +105,18 @@ async function saveProductService(request) {
     }
 };
 
+let currentListingService;
+let waitingForReload = true;
+
 async function createListingService(request) {
     /*
-    request:{
-        action: 'listProduct',
-        id: 
+    request:
+        {
+            action: 'listProduct',
+            id: 
         }
     */
-    const currentListingService = new ListingService();
+    currentListingService = new ListingService();
     try{
         
         console.log('[createListingService] Started with request:', request);
@@ -125,13 +129,16 @@ async function createListingService(request) {
         console.log('[createListingService] Product to list:', prodToList);
         await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
+        currentListingService = undefined;
         return {success:true, data:prodToList};
     }
     catch(error){
         console.error('[createListingService] Error:', error);
+        currentListingService = undefined;
         throw error;
         
     }
+    
 }
 
 class ListingService{
@@ -152,84 +159,81 @@ class ListingService{
             */
 
     constructor() {
-        this.processing = false;
         this.listingTabId = null;
         this.productData = null;
-
-        // Define required and optional actions separately
-        // this.requiredActions = [
-        //     { func: this.clickListButton, name: 'clickListButton' },
-        //     { func: this.fillTitle, name: 'fillTitle' },
-        //     { func: this.fillImages, name: 'fillImages' },
-        // ];
-
-        // this.optionalActions = [
-        //     { func: this.selectCategory, name: 'selectCategory' },
-        //     { func: this.selectCondition, name: 'selectCondition' },
-        // ];
-
+        this.lastActionSucceeded = true; // Flag to track if previous action succeeded
+        
         this.actions = [
-            {func:this.clickListButton, name:'clickListButton', type:"required"},
-            {func:this.fillTitle, name:'fillTitle', type:"required"},
-            {func:this.selectCategory, name:'selectCategory', type:"optional"},
-            {func:this.selectCondition, name:'selectCondition', type:"optional"},
-            {func:this.fillImages, name:'fillImages', type:"required"},
+            {func: this.clickListButton, name: 'clickListButton', type: "required"},
+            {func: this.fillTitle, name: 'fillTitle', type: "required"},
+            {func: this.selectCategory, name: 'selectCategory', type: "optional"},
+            {func: this.selectCondition, name: 'selectCondition', type: "optional"},
+            {func: this.fillImages, name: 'fillImages', type: "required"},
+            {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
 
-    async startListingProcess(productData) {
-        if (this.processing) {
-            console.log('[ListingService] A listing process is already running. Ignoring this request.');
-            return;
+    async waitForReloadIfNeeded() {
+        if (this.lastActionSucceeded) {
+            console.log('[ListingService] Waiting for page reload...');
+            await tabCommunication.waitForReload();
+        } else {
+            console.log('[ListingService] Skipping reload wait due to previous action failure');
         }
-        this.processing = true;
+    }
 
+    async startListingProcess(productData) {
         console.log('[ListingService] Started with product data:', productData);
-        try {
-            const newTab = await chrome.tabs.create({
-                url: 'https://www.ebay.com/sell/create',
-                active: true,
-            });
-            console.log('[ListingService] New tab created with ID:', newTab.id);
-            this.listingTabId = newTab.id;
+        
+        const newTab = await chrome.tabs.create({
+            url: 'https://www.ebay.com/sell/create',
+            active: true,
+        });
+        console.log('[ListingService] New tab created with ID:', newTab.id);
+        this.listingTabId = newTab.id;
+        this.lastActionSucceeded = true; // Initialize flag
 
-            for(const action of this.actions){
-                if(action.type === "required"){
-                    console.log(`[ListingService] Executing required action: ${action.name}`);
-                    const result = await action.func.call(this, productData);
-                    if (!result.success) {
-                        if (result.error instanceof ElementNotFoundError) {
-                            throw new Error(`Required element not found in ${action.name}: ${result.error.message}`);
-                        }
-                        throw result.error;
-                    }
+        for (const action of this.actions) {
+            try {
+                // Wait for reload before each action (if needed)
+                await this.waitForReloadIfNeeded();
+                
+                const result = await action.func.call(this, productData);
+                
+                if (!result?.success) {
+                    this.lastActionSucceeded = false;
+                    throw result.error;
                 }
-                else if(action.type === "optional"){
-                    console.log(`[ListingService] Executing optional action: ${action.name}`);
-                    const result = await action.func.call(this, productData);
-                    if (!result.success) {
-                        if (result.error instanceof ElementNotFoundError) {
-                            console.log(`[ListingService] Skipping optional action ${action.name} due to missing element: ${result.error.message}`);
-                            continue;
-                        }
-                        throw result.error;
-                    }
-                }
+                
+                this.lastActionSucceeded = true;
+                console.log(`[ListingService] Action ${action.name} executed successfully.`);
             }
-        } catch (error) {
-            console.error('[ListingService] Error:', error);
-            throw error;
-        } finally {
-            this.processing = false;
+            catch (error) {
+                this.lastActionSucceeded = false;
+                
+                if (error instanceof ElementNotFoundError) {
+                    if (action.type === "required") {
+                        throw new Error(`Required element not found in ${action.name}: ${error.message}`);
+                    }
+                    console.log(`[ListingService] Skipping optional action ${action.name} due to missing element: ${error.message}`);
+                    continue;
+                }
+                console.error('[ListingService] Error:', error);
+                throw error;
+            }
         }
     }
 
     async clickListButton(productData){
         console.log('[ListingService] Clicking list button:', productData.title);
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'clickElement',
             selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
         });
+        // const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        //     action: 'clickElement',
+        //     selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+        // });
         if(!response.success){
             return response;
         }
@@ -241,7 +245,7 @@ class ListingService{
     async fillTitle(productData){
         console.log('[ListingService] Filling title:', productData.title);
         console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'fillValue',
             selector:'#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
             value: productData.title,
@@ -263,7 +267,7 @@ class ListingService{
     
     async selectCategory(productData){
         console.log("[ListingService] Looking for category popup:")
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'detectElement',
             selector: '#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker',
         })
@@ -294,7 +298,7 @@ class ListingService{
     
     async selectCondition(productData){
         console.log("[ListingService] Looking for condition popup..")
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'detectElement',
             selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
         })
@@ -328,7 +332,7 @@ class ListingService{
     
     async fillImages(productData){
         console.log('[ListingService] Filling images:', productData.images);
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'uploadImages',
             selector:'#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__photos.summary__photos-image-guidance.summary__photos--photo-framework > div:nth-child(2) > div > div.uploader-ui.empty > div:nth-child(1) > div.uploader-thumbnails-ux.uploader-thumbnails-ux--inline.uploader-thumbnails-ux--inline-edit > div',
             images: productData.images,
@@ -337,6 +341,16 @@ class ListingService{
             return response;
         }
         console.log('[ListingService] Images filled successfully:', response);
+        return { success: true };
+    }
+
+    async endListing(productData){
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'listingComplete'
+        })
+        if(!response.success){
+            return response;
+        }
         return { success: true };
     }
 }
@@ -404,6 +418,68 @@ class tabCommunication {
             }
         }
     }
+
+    static async sendMessageWaitReload(tabId, message){
+        waitingForReload = true;
+        const startTime = Date.now();
+        await Promise.race([
+            new Promise(resolve => setTimeout(resolve, 60000)),
+            new Promise(resolve => {
+                const checkFlag = setInterval(() => {
+                    if(!waitingForReload){
+                        clearInterval(checkFlag);
+                        resolve();
+                    }
+                }, 100);
+            })
+                
+        ]);
+        waitingForReload = false;
+        console.log('[sendMessageWaitReload] Waiting for reload resolved:', Date.now() - startTime);
+        return await this.sendMessage(tabId, message);
+        
+    }
+    static async waitForReload(){
+        waitingForReload = true;
+        const startTime = Date.now();
+        await Promise.race([
+            new Promise(resolve => setTimeout(resolve, 60000)),
+            new Promise(resolve => {
+                const checkFlag = setInterval(() => {
+                    if(!waitingForReload){
+                        clearInterval(checkFlag);
+                        resolve();
+                    }
+                }, 100);
+            })
+                
+        ]);
+        waitingForReload = false;
+        console.log('[waitForReload] Waiting for reload resolved:', Date.now() - startTime);
+        return true;
+    }
+    static async handleReload(request){
+        /*
+        request:{
+            action: 'contentLoaded',
+            data: ''
+        }   
+        */
+
+       let message = '';
+       let currentlyListing = currentListingService !== undefined;
+        console.log('[resolveHandleReload] Request:', request);
+        if(waitingForReload){
+            // console.log('[resolveHandleReload] Waiting for reload:', request);
+            message = 'no longer waiting for reload';
+        }else{
+            // waitingForReload = true;
+            message = 'wasnt waiting for reload';
+        }
+        waitingForReload = false;
+        return {success:true, message, currentlyListing};
+
+    }
 }
 
 // Action to service mapping
@@ -414,7 +490,8 @@ const actionToServiceMap = {
     'updateProduct': (request) => ProductService.updateProduct(request),
     'listProduct': createListingService,
     'saveProduct': saveProductService,
-    'verifyAuth': (request) => auth.verifyToken(request)
+    'verifyAuth': (request) => auth.verifyToken(request),
+    'contentLoaded': (request) => tabCommunication.handleReload(request),
 };
 
 // Debugging helper to log all available actions
@@ -425,7 +502,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('[onMessage] Received message:', request);
 
     const action = request.action;
-    console.log('[onMessage] Action received:', action);
+    // console.log('[onMessage] Action received:', action);
 
     if (!actionToServiceMap[action]) {
         console.error('[onMessage] Unknown action received:', action);

@@ -5,7 +5,6 @@
     "description": "AliExpress to eBay dropshipping assistant",
     "permissions": [
       "activeTab",
-      "scripting",
       "storage",
       "tabs",
       "cookies"
