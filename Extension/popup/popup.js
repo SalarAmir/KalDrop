@@ -2,23 +2,36 @@ import './auth.js';
 
 document.addEventListener('DOMContentLoaded', async() => {
   // await auth.verifyAuth();
-
+  const {data:extractedProducts} = (await chrome.runtime.sendMessage({action: 'getAllProducts'})).data;
+  
   console.log('new Popup loaded');
   const extractBtn = document.getElementById('extractBtn');
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  console.log('Active tab in pop:', tab);
+  if(tab.url.includes('aliexpress.com')){
+    extractBtn.disabled = false;
+  }
+
   const profitInfo = document.getElementById('profitInfo');
   const listBtn = document.getElementById('listBtn');
   const manageBtn = document.getElementById('manageBtn');
   const dashboardBtn = document.getElementById('dashboardBtn');
   const status = document.getElementById('status');
   let currentProductData = null;
-  
+  console.log('extractedProducts:', extractedProducts.length);
+  if(extractedProducts?.length > 0){
+    manageBtn.disabled = false;
+    listBtn.disabled = false;
+  }else{
+    status.textContent = 'No products extracted yet!';
+  }
+
   extractBtn.addEventListener('click', async () => {
     try {
       status.textContent = 'Extracting product data...';
       status.className = '';
       
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      console.log('Active tab in pop:', tab);
+      
       const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
       console.log("response from content:", response);
       if (response.success) {

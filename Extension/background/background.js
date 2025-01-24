@@ -162,6 +162,7 @@ class ListingService{
         this.listingTabId = null;
         this.productData = null;
         this.lastActionSucceeded = true; // Flag to track if previous action succeeded
+        this.nextWaitReload = false;
         
         this.actions = [
             {func: this.clickListButton, name: 'clickListButton', type: "required"},
@@ -174,7 +175,7 @@ class ListingService{
     }
 
     async waitForReloadIfNeeded() {
-        if (this.lastActionSucceeded) {
+        if (this.nextWaitReload) {
             console.log('[ListingService] Waiting for page reload...');
             await tabCommunication.waitForReload();
         } else {
@@ -191,7 +192,8 @@ class ListingService{
         });
         console.log('[ListingService] New tab created with ID:', newTab.id);
         this.listingTabId = newTab.id;
-        this.lastActionSucceeded = true; // Initialize flag
+        await tabCommunication.waitForReload();
+        // this.lastActionSucceeded = true; // Initialize flag
 
         for (const action of this.actions) {
             try {
@@ -201,15 +203,15 @@ class ListingService{
                 const result = await action.func.call(this, productData);
                 
                 if (!result?.success) {
-                    this.lastActionSucceeded = false;
+                    // this.lastActionSucceeded = false;
                     throw result.error;
                 }
                 
-                this.lastActionSucceeded = true;
+                // this.lastActionSucceeded = true;
                 console.log(`[ListingService] Action ${action.name} executed successfully.`);
             }
             catch (error) {
-                this.lastActionSucceeded = false;
+                // this.lastActionSucceeded = false;
                 
                 if (error instanceof ElementNotFoundError) {
                     if (action.type === "required") {
@@ -225,6 +227,7 @@ class ListingService{
     }
 
     async clickListButton(productData){
+        this.nextWaitReload = false;
         console.log('[ListingService] Clicking list button:', productData.title);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'clickElement',
@@ -237,12 +240,14 @@ class ListingService{
         if(!response.success){
             return response;
         }
+        this.nextWaitReload = true;
 
         console.log('[ListingService] List button clicked successfully:', response);
         return { success: true };
     }
     
     async fillTitle(productData){
+        this.nextWaitReload = false;
         console.log('[ListingService] Filling title:', productData.title);
         console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
@@ -262,10 +267,12 @@ class ListingService{
             return responseClick;
         }
         console.log('[ListingService] Clicked on suggested title:', responseClick);
+        this.nextWaitReload = true;
         return { success: true };
     }
     
     async selectCategory(productData){
+        this.nextWaitReload = false;
         console.log("[ListingService] Looking for category popup:")
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'detectElement',
@@ -284,19 +291,11 @@ class ListingService{
             return responseClick;
         }
         console.log("[ListingService] Category selected successfully.")
-        console.log("[ListingService] Clicking without match button.");
-        const responseClickWithoutMatch = await tabCommunication.sendMessageRetries(this.listingTabId, {
-            action :'clickElement',
-            selector:'#mainContent > div > div > div.prelist-radix__next-container > button'
-        })
-        if(!responseClickWithoutMatch.success){
-            return responseClickWithoutMatch;
-        }
-        console.log("[ListingService] Clicked without match button.")
         return { success: true };
     }
     
     async selectCondition(productData){
+        this.nextWaitReload = false;
         console.log("[ListingService] Looking for condition popup..")
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'detectElement',
@@ -327,10 +326,12 @@ class ListingService{
             return responseClick;
         }
         console.log("[ListingService] Clicked on continue button.")
+        this.nextWaitReload = true;
         return { success: true };
     }
     
     async fillImages(productData){
+        this.nextWaitReload = false;
         console.log('[ListingService] Filling images:', productData.images);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'uploadImages',
@@ -341,6 +342,7 @@ class ListingService{
             return response;
         }
         console.log('[ListingService] Images filled successfully:', response);
+        // this.nextWaitReload = true;
         return { success: true };
     }
 

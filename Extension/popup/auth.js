@@ -5,10 +5,12 @@ class Auth{
     async verifyAuth(){
         const access_token = await chrome.storage.local.get('access_token');
         if(!access_token){
+            
             this.authenticated = false;
             this.redirectLogin();
             return this.authenticated;
         }
+        console.log('access_token:', access_token);
         const response = await chrome.runtime.sendMessage({
             action: 'verifyAuth'
         });

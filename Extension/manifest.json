@@ -18,7 +18,9 @@
       "service_worker": "background.bundle.js"
     },
     "content_scripts": [{
-      "matches": ["<all_urls>"],
+      "matches": [ "https://*.aliexpress.com/*",
+      "https://*.ebay.com/*",
+      "http://*.localhost/*"],
       "js": ["content.bundle.js"]
     }],
     "action": {
