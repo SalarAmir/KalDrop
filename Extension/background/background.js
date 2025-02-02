@@ -118,7 +118,6 @@ async function createListingService(request) {
     */
     currentListingService = new ListingService();
     try{
-        
         console.log('[createListingService] Started with request:', request);
         let prodToList;
         if(request.id === undefined){
@@ -126,6 +125,25 @@ async function createListingService(request) {
         }else{
             prodToList = await StorageService.getProductById(request.id);
         }
+
+        //uploader settings handling
+        const uploader_settings = await API.get('/uploader-settings');
+        // console.log('[createListingService] Uploader settings:', uploader_settings);
+        console.log('[createListingService] specifics from db:', uploader_settings.item_specifics);
+        prodToList.specifics = {...prodToList.specifications, ...uploader_settings.item_specifics};
+
+        //template handling:
+        const {template_settings:template} = await API.get('/template/selected-template');
+        for (let i = 0; i < prodToList.descriptionImages.length; i++) {
+            const imgUrl = prodToList.descriptionImages[i];
+            console.log("inserting img url", imgUrl, i+1);
+            template.html_code = template.html_code.replace(`[Vendra Image ${i+1}]`, imgUrl);
+            
+        }
+        console.log('[createListingService] Template:', template);
+        prodToList.template = template.html_code;
+        
+        // const {}
         console.log('[createListingService] Product to list:', prodToList);
         await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
@@ -169,7 +187,10 @@ class ListingService{
             {func: this.fillTitle, name: 'fillTitle', type: "required"},
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
-            {func: this.fillImages, name: 'fillImages', type: "required"},
+            // {func: this.fillImages, name: 'fillImages', type: "required"},
+            {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
+            {func: this.setTemplate, name: 'setTemplate', type: "optional"},
+            {func: this.setPricing, name:'setPricing', type:'optional'},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
@@ -184,7 +205,7 @@ class ListingService{
     }
 
     async startListingProcess(productData) {
-        console.log('[ListingService] Started with product data:', productData);
+        // console.log('[ListingService] Started with product data:', productData);
         
         const newTab = await chrome.tabs.create({
             url: 'https://www.ebay.com/sell/create',
@@ -201,10 +222,15 @@ class ListingService{
                 await this.waitForReloadIfNeeded();
                 
                 const result = await action.func.call(this, productData);
-                
+                if(result===undefined){
+                    console.error(`ListingService] Action ${action.name} failed unexpected error`)
+                    throw ""
+                }
                 if (!result?.success) {
                     // this.lastActionSucceeded = false;
-                    throw result.error;
+                    // throw error;
+                    console.error(`[ListingService] Action ${action.name} failed:`, result.error);
+                    throw new Error(`Action ${action.name} failed: ${result.error}`);
                 }
                 
                 // this.lastActionSucceeded = true;
@@ -297,7 +323,7 @@ class ListingService{
     async selectCondition(productData){
         this.nextWaitReload = false;
         console.log("[ListingService] Looking for condition popup..")
-        const response = await tabCommunication.sendMessage(this.listingTabId, {
+        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action: 'detectElement',
             selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
         })
@@ -318,9 +344,13 @@ class ListingService{
         }
         console.log("[ListingService] Condition selected successfully.")
         //continue listing button:
-        const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
-            action :'clickElement',
-            selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.condition-dialog-non-block-radix__continue > button'
+        // const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        //     action :'clickElement',
+        //     selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.condition-dialog-non-block-radix__continue > button'
+        // })
+        const responseClick = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'clickElementText',
+            text:'Continue to listing'
         })
         if(!responseClick.success){
             return responseClick;
@@ -331,7 +361,9 @@ class ListingService{
     }
     
     async fillImages(productData){
+        //wont navigate away from page
         this.nextWaitReload = false;
+
         console.log('[ListingService] Filling images:', productData.images);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'uploadImages',
@@ -344,6 +376,60 @@ class ListingService{
         console.log('[ListingService] Images filled successfully:', response);
         // this.nextWaitReload = true;
         return { success: true };
+    }
+
+    async fillItemSpecifics(productData){
+        //wont navigate away from page
+        this.nextWaitReload = false;
+        console.log('[ListingService] Filling item specifics:', productData.specifics);
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'fillSpecifics',
+            specifics: productData.specifics,
+            // selector:'#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__details
+        });
+        if(!response.success){
+            return response;
+        }
+
+        return {success:true};
+    }
+
+    async setTemplate(productData){
+        this.nextWaitReload = false;
+        console.log('[ListingService] Setting template:', productData.template);
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'setTemplate',
+            template: productData.template
+        });
+        if(!response.success){
+            return response;
+        }
+        return {success:true};
+    }
+
+    async setPricing(productData){
+        this.nextWaitReload = false;
+        console.log('[ListingService] Setting price:', productData.price);
+        //buy it now option
+        const buyItNowClick = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'selectDropdownOption',
+            selector: '.listbox-button',
+            optionText: 'Buy It Now'
+        });
+        if(!buyItNowClick.success){
+            return buyItNowClick;
+        }
+        
+        const fillPricing = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'fillPricing',
+            price: productData.price,
+            quantity: 1,
+        });
+        if(!fillPricing.success){
+            return fillPricing;
+        }
+
+        return {success:true};
     }
 
     async endListing(productData){
