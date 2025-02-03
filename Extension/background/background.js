@@ -82,7 +82,7 @@ class Auth{
     }
 }
 const auth = new Auth();
-auth.initAuth();
+// auth.initAuth();
 chrome.cookies.onChanged.addListener((changeInfo)=>auth.cookieChanged(changeInfo));
 
 async function saveProductService(request) {
@@ -187,6 +187,7 @@ class ListingService{
         this.actions = [
             {func: this.clickListButton, name: 'clickListButton', type: "required"},
             {func: this.fillTitle, name: 'fillTitle', type: "required"},
+            {func: this.similarProducts, name: 'similarProducts', type: "optional"},
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
             // {func: this.fillImages, name: 'fillImages', type: "required"},
@@ -296,6 +297,21 @@ class ListingService{
         }
         console.log('[ListingService] Clicked on suggested title:', responseClick);
         this.nextWaitReload = true;
+        return { success: true };
+    }
+
+    async similarProducts(productData){
+        this.nextWaitReload = false;
+        console.log('[ListingService] Looking for similar products..')
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'clickElementText',
+            text: 'Continue without match'
+        });
+        if(!response.success){
+            return response;
+        }
+        console.log('[ListingService] Clicked on continue without match:', response);
+        // this.nextWaitReload = true;
         return { success: true };
     }
     
