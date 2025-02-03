@@ -12,6 +12,7 @@ module.exports = {
     manage: './Extension/popup/manage.js',
     auth: './Extension/popup/auth.js',
     edit_product: './Extension/popup/edit_product.js',
+    subscribe: './Extension/popup/subscribe.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

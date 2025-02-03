@@ -387,7 +387,7 @@ export class EbayListingAutomator {
     async fillSpecifics(requestData) {
         await this.getSpecifics();
         const specifics = requestData.specifics;
-    
+        const customSpecifics = [];
         for (const key in specifics) {
             const specific = this.pageInfo.specifics[key];
             if (!specific) {
@@ -483,7 +483,7 @@ export class EbayListingAutomator {
         // const htmlInpBox = await this.waitAndFindElement('textarea[class="se-rte__button-group-editor__html"]');
         await new Promise(resolve => setTimeout(resolve, 500));
         const htmlInpBox = document.querySelector('textarea[class="se-rte__button-group-editor__html"]');
-       
+        console.log('HTML input box:', htmlInpBox);
         htmlInpBox.value = requestData.template;
         // htmlInpBox.dispatchEvent(new Event('input', { bubbles: true }));
 

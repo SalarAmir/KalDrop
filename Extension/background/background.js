@@ -6,7 +6,6 @@ import StorageService from "./storageService.js";
 //clear products:
 // StorageService.remove('extractedProducts');
 
-
 class Auth{
     constructor(){
         this.frontendDomain = process.env.FRONTEND_DOMAIN;
@@ -18,6 +17,7 @@ class Auth{
         }
         this.access_token = null
         this.logged_in = false
+        this.subscribed = false
 
         this.initAuth().then(async () => {
             await this.verifyToken();
@@ -47,13 +47,15 @@ class Auth{
 
     async verifyToken(request=null){
         const response = await API.get('/verify');
+        const subscriptionResponse = await API.get('/user-subscription');
+        const subscribed = subscriptionResponse.status === "active";
         console.log('[verifyToken] Response:', response);
         if(response.message !== "Authenticated"){
             console.error('[verifyToken] Unauthorized. Clearing auth token.');
             await StorageService.remove('access_token');
-            return {authenticated:false};
+            return {authenticated:false, subscribed};
         }
-        return {authenticated:true};
+        return {authenticated:true, subscribed};
 
     }
 

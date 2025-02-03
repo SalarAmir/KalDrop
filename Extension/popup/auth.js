@@ -1,6 +1,7 @@
 class Auth{
     constructor(){
         this.authenticated = false;
+        this.subscribed = false;
     }
     async verifyAuth(){
         const access_token = await chrome.storage.local.get('access_token');
@@ -21,11 +22,23 @@ class Auth{
             return this.authenticated;
         }
         this.authenticated = true;
+
+        if(!response.data.subscribed){
+            this.subscribed = false;
+            this.redirectSubscription();
+            return this.subscribed;
+        }
+        this.subscribed = true;
+
         return this.authenticated;
     }
 
     redirectLogin(){
         window.location.href = 'popup_login.html';
+    }
+
+    redirectSubscription(){
+        window.location.href = 'popup_subscribe.html';
     }
 }
 export const auth = new Auth();
