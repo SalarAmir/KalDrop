@@ -40,26 +40,21 @@
                 <input type="text" id="supplier" name="supplier" required>
             </div>
 
+            <!-- Specifications Section -->
             <div class="form-group">
                 <label>Specifications</label>
                 <div id="specificationsContainer"></div>
+                <button type="button" id="addSpecificationBtn" class="btn btn--secondary">Add Specification</button>
             </div>
 
+            <!-- Image URLs Section -->
             <div class="form-group">
-                <label>Variants</label>
-                <div id="variantsContainer">
-                    <div>
-                        <h4>Sizes</h4>
-                        <div id="sizesContainer"></div>
-                    </div>
-                    <div>
-                        <h4>Colors</h4>
-                        <div id="colorsContainer"></div>
-                    </div>
-                </div>
+                <label>Image URLs</label>
+                <div id="imagesContainer"></div>
+                <button type="button" id="addImageBtn" class="btn btn--secondary">Add Image URL</button>
             </div>
 
-            <button type="submit" class="btn btn--primary">Save Changes</button>
+            <button type="button" id="saveAndListBtn" class="btn btn--success">Save and List</button>
         </form>
     </div>
     <script src="../edit_product.bundle.js"></script>

@@ -9,7 +9,8 @@ export class AliExpressScraper {
       const data = {
         url:this.getUrl(),
         title: this.getTitle(),
-        descriptionImages: this.getDescriptionImages(), // Replaced description with descriptionImages
+        descriptionImages: this.getDescriptionImages(),
+        description: this.getDescription(),
         price: this.getPrice(),
         originalPrice: this.getOriginalPrice(),
         discount: this.getDiscount(),
@@ -43,20 +44,32 @@ export class AliExpressScraper {
   }
 
   getDescriptionImages() {
-    const container = document.querySelector('.detail-desc-decorate-richtext'); // Select the container div
+    document.querySelector("a.comet-v2-anchor-link.comet-v2-anchor-link-active").click();
+
+
+    const container = document.querySelector('#product-description') || document.querySelector('.detail-desc-decorate-richtext');
     if (!container) {
-      // throw new Error('Container with class "detail-desc-decorate-richtext" not found.');
-      console.error('Container with class "detail-desc-decorate-richtext" not found.');
-      return []; // Return an empty array if the container is not found
+      console.error('Description container  not found.');
+      return [];
     }
 
-    const images = container.querySelectorAll('img'); // Select all image elements inside the container
-    const imageUrls = Array.from(images) // Convert NodeList to an array
-      .slice(0, 5) // Get only the first 5 images
-      .map(img => img.src) // Extract the 'src' attribute of each image
-      .filter(Boolean); // Filter out any empty or undefined URLs
-
+    const images = container.querySelectorAll('img');
+    const imageUrls = Array.from(images) 
+      .slice(0, 5)
+      .map(img => img.src)
+      .filter(Boolean);
+    console.log('Description Images:', imageUrls);
     return imageUrls;
+  }
+  getDescription() {
+    const container = document.querySelector('#product-description') || document.querySelector('.detail-desc-decorate-richtext');
+    if (!container) {
+      console.error('Description container  not found.');
+      return '';
+    }
+    const description = container.innerText.trim();
+    return description;
+
   }
 
   getPrice() {
@@ -140,7 +153,7 @@ export class AliExpressScraper {
   }
 
   getSpecifications() {
-    const specList = document.querySelectorAll('.specification--prop--Jh28bKu'); // Select specification containers
+    const specList = document.querySelectorAll('.specification--prop--Jh28bKu');
     if (!specList) {
       return {}; // Return an empty object if no specifications are found
     }

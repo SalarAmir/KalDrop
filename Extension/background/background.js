@@ -33,7 +33,7 @@ class Auth{
             console.log('[initAuth] No auth cookie found.');
             return;
         }
-        
+
         //convert to json obj:
         const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
         console.log('[initAuth] Auth cookie found:', authObj);
@@ -59,6 +59,7 @@ class Auth{
 
     }
 
+    //callback:
     async cookieChanged(changeInfo){
         if(changeInfo.cookie.domain !== this.frontendDomain) return;
         if(changeInfo.cookie.name !== this.authCookieName) return;
@@ -140,8 +141,11 @@ async function createListingService(request) {
             const imgUrl = prodToList.descriptionImages[i];
             console.log("inserting img url", imgUrl, i+1);
             template.html_code = template.html_code.replace(`[Vendra Image ${i+1}]`, imgUrl);
-            
         }
+
+        template.html_code = template.html_code.replace('[Vendra Title]', prodToList.title);
+        template.html_code = template.html_code.replace('[Vendra Description]', prodToList.description);
+
         console.log('[createListingService] Template:', template);
         prodToList.template = template.html_code;
         
@@ -191,9 +195,9 @@ class ListingService{
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
             // {func: this.fillImages, name: 'fillImages', type: "required"},
+            {func: this.setPricing, name:'setPricing', type:'optional'},
             {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
             {func: this.setTemplate, name: 'setTemplate', type: "optional"},
-            {func: this.setPricing, name:'setPricing', type:'optional'},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
@@ -341,9 +345,10 @@ class ListingService{
     async selectCondition(productData){
         this.nextWaitReload = false;
         console.log("[ListingService] Looking for condition popup..")
+        await new Promise(resolve => setTimeout(resolve, 8000));
         const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
             action: 'detectElement',
-            selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
+            selector:'.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
         })
         if(!response.success){
             console.log("[ListingService] Condition popup not found. Continuing..")

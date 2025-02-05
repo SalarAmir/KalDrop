@@ -144,6 +144,28 @@ body {
   background-color: var(--background-color);
 }
 
+.specification-item,
+.image-item {
+  margin-bottom: 10px;
+}
+
+.image-preview {
+  display: block;
+  max-width: 100px;
+  max-height: 100px;
+  margin-top: 5px;
+}
+
+.btn--danger {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.btn--secondary {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
 /* Action Buttons */
 /* .btn-group {
   display: flex;

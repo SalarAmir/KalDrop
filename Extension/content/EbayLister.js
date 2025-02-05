@@ -484,9 +484,16 @@ export class EbayListingAutomator {
         await new Promise(resolve => setTimeout(resolve, 500));
         const htmlInpBox = document.querySelector('textarea[class="se-rte__button-group-editor__html"]');
         console.log('HTML input box:', htmlInpBox);
+        htmlInpBox.click();
+        await new Promise(resolve => setTimeout(resolve, 500));
         htmlInpBox.value = requestData.template;
-        // htmlInpBox.dispatchEvent(new Event('input', { bubbles: true }));
+        htmlInpBox.dispatchEvent(new Event('input', { bubbles: true }));
+        htmlInpBox.dispatchEvent(new Event('change', { bubbles: true }));
+        htmlInpBox.dispatchEvent(new Event('blur', { bubbles: true }));
 
+        // Simulate user interaction
+        htmlInpBox.focus();
+        htmlInpBox.click();
         return true
     }
 
@@ -587,8 +594,8 @@ export class EbayListingAutomator {
         return element;
     }
     // Utility methods
-    async waitAndFindElement(selector, timeout = 7000, selectorType = 'query', context = document) {
-        
+    async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
+        console.log('Waiting for element:', selector);
         let element;
         switch(selectorType){
             case 'query':
