@@ -1,6 +1,7 @@
 import API from './API.js';
 import tabCommunication from './tabCommunication.js';
 import StorageService from './storageService.js';
+import { ElementNotFoundError } from './customErrors.js';
 
 async function saveProductService(request) {
     try {
@@ -25,7 +26,7 @@ async function saveProductService(request) {
 };
 
 let currentListingService;
-let waitingForReload = true;
+
 
 async function createListingService(request) {
     /*
@@ -53,20 +54,22 @@ async function createListingService(request) {
 
         //template handling:
         const {template_settings:template} = await API.get('/template/selected-template');
-        for (let i = 0; i < prodToList.descriptionImages.length; i++) {
-            const imgUrl = prodToList.descriptionImages[i];
-            console.log("inserting img url", imgUrl, i+1);
-            template.html_code = template.html_code.replace(`[Vendra Image ${i+1}]`, imgUrl);
+        if(template && template.html_code){
+            for (let i = 0; i < prodToList.descriptionImages.length; i++) {
+                const imgUrl = prodToList.descriptionImages[i];
+                console.log("inserting img url", imgUrl, i+1);
+                template.html_code = template.html_code.replace(`[Vendra Image ${i+1}]`, imgUrl);
+            }
+            
+            template.html_code = template.html_code.replace('[Vendra Title]', prodToList.title);
+            template.html_code = template.html_code.replace('[Vendra Description]', prodToList.description);
+
+            console.log('[createListingService] Template:', template);
+            prodToList.template = template.html_code;
+            
+            // const {}
+            console.log('[createListingService] Product to list:', prodToList);
         }
-
-        template.html_code = template.html_code.replace('[Vendra Title]', prodToList.title);
-        template.html_code = template.html_code.replace('[Vendra Description]', prodToList.description);
-
-        console.log('[createListingService] Template:', template);
-        prodToList.template = template.html_code;
-        
-        // const {}
-        console.log('[createListingService] Product to list:', prodToList);
         await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
         currentListingService = undefined;
@@ -382,4 +385,4 @@ class ListingService{
     }
 }
 
-export {saveProductService, createListingService };
+export {saveProductService, createListingService, currentListingService };

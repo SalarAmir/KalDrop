@@ -560,13 +560,14 @@ export class EbayListingAutomator {
             observer.observe(pricingOptionsButton, config);
         });
 
-
-
+        
+        
     }
     async listingComplete(requestData){
         this.loadingOverlay.hide();
         return true;
     }
+    // Utility methods
     findElement(selector, selectorType = 'query', context = document){
         let element;
         switch(selectorType){
@@ -593,72 +594,111 @@ export class EbayListingAutomator {
         }
         return element;
     }
-    // Utility methods
+    /* 
     async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
         console.log('Waiting for element:', selector);
-        let element;
-        switch(selectorType){
-            case 'query':
-                element = context.querySelector(selector);
-                break;
-            case 'id':
-                element = context.getElementById(selector);
-                break;
-            case 'class':
-                element = context.getElementsByClassName(selector)[0];
-                break;
-            case 'xpath':
-                element = document.evaluate(
-                    selector,
-                    context,
-                    null,
-                    XPathResult.FIRST_ORDERED_NODE_TYPE,
-                    null
-                ).singleNodeValue;
-                break;
-                default:
-                    element = context.querySelector(selector);
-        }
-                
+    
         return new Promise((resolve, reject) => {
-            var timer = false;
-            if(element){
-                console.log('Already found:', element);
-                resolve(element);
-            }
-            const observer = new MutationObserver(()=>{
-                if(element){
-                    console.log("found using observer")
+            let timer = null;
+    
+            const checkForElement = () => {
+                let element = null;
+                switch (selectorType) {
+                    case 'query':
+                        element = context.querySelector(selector);
+                        break;
+                    case 'id':
+                        element = context.getElementById(selector);
+                        break;
+                    case 'class':
+                        element = context.getElementsByClassName(selector)[0];
+                        break;
+                    case 'xpath':
+                        element = document.evaluate(
+                            selector,
+                            context,
+                            null,
+                            XPathResult.FIRST_ORDERED_NODE_TYPE,
+                            null
+                        ).singleNodeValue;
+                        break;
+                    default:
+                        element = context.querySelector(selector);
+                }
+    
+                if (element) {
+                    console.log('Element found:', element);
+                    if (timer) clearTimeout(timer);
                     observer.disconnect();
-                    if(timer!==false) clearTimeout(timer);
                     resolve(element);
                 }
-            });
-            observer.observe(context, {childList: true, subtree: true});
-            if(timeout){
-                timer= setTimeout(()=>{
+            };
+    
+            const observer = new MutationObserver(checkForElement);
+            observer.observe(context, { childList: true, subtree: true });
+    
+            // Initial check
+            checkForElement();
+    
+            if (timeout) {
+                timer = setTimeout(() => {
                     observer.disconnect();
-                    console.error("timeout error");
+                    console.error("Timeout error");
                     reject(new Error(`Element not found: ${selector}`));
                 }, timeout);
             }
         });
-        // return new Promise((resolve, reject) => {
-        //     const startTime = Date.now();
+    }
+    
+    */
+    async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
+        console.log('Waiting for element:', selector);
+        const checkForElement = () => {
+            let element = null;
+            switch(selectorType){
+                case 'query':
+                    element = context.querySelector(selector);
+                    break;
+                case 'id':
+                    element = context.getElementById(selector);
+                    break;
+                case 'class':
+                    element = context.getElementsByClassName(selector)[0];
+                    break;
+                case 'xpath':
+                    element = document.evaluate(
+                        selector,
+                        context,
+                        null,
+                        XPathResult.FIRST_ORDERED_NODE_TYPE,
+                        null
+                    ).singleNodeValue;
+                    break;
+                    default:
+                        element = context.querySelector(selector);
+            }
 
-        //     const checkForElement = () => {
-        //         const element = document.querySelector(selector);
+            return element;
+
+        }
                 
-        //         if (element) {
-        //             resolve(element);
-        //         } else if (Date.now() - startTime > timeout) {
-        //             reject(new Error(`Element not found: ${selector}`));
-        //         } else {
-        //             setTimeout(checkForElement, 100);
-        //         }
-        //     };
-
-        //     checkForElement();
-        // });
+        return new Promise((resolve, reject) => {
+            let element = checkForElement();
+            if (element) {
+                resolve(element);
+            }
+            const interval = setInterval(() => {
+                element = checkForElement();
+                if (element) {
+                    clearInterval(interval);
+                    resolve(element);
+                }
+            }, 500);
+            setTimeout(() => {
+                clearInterval(interval);
+                reject(new Error(`Element not found: ${selector}`));
+            }, timeout);
+        });
+ 
     }
 }

@@ -1,4 +1,9 @@
+import { currentListingService } from "./listingService.js";
+import { ElementNotFoundError } from "./customErrors.js";
+let waitingForReload = true;
+
 export default class tabCommunication {
+    
     static async sendMessage(tabId, message) {
         try {
             const response = await chrome.tabs.sendMessage(tabId, message);
@@ -19,7 +24,6 @@ export default class tabCommunication {
             throw error; // Re-throw other errors
         }
     }
-
     static async sendMessageRetries(tabId, message, maxRetries = 5, retryDelay = 2000) {
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
@@ -45,7 +49,6 @@ export default class tabCommunication {
             }
         }
     }
-
     static async sendMessageWaitReload(tabId, message){
         waitingForReload = true;
         const startTime = Date.now();
@@ -93,8 +96,8 @@ export default class tabCommunication {
         }   
         */
 
-       let message = '';
-       let currentlyListing = currentListingService !== undefined;
+        let message = '';
+        let currentlyListing = currentListingService !== undefined;
         console.log('[resolveHandleReload] Request:', request);
         if(waitingForReload){
             // console.log('[resolveHandleReload] Waiting for reload:', request);

@@ -1,5 +1,7 @@
 import API from './API.js';
 import StorageService from './storageService.js';
+import { createListingService } from './listingService.js';
+
 
 export default class ProductService {
 	static async extractProduct(request){
@@ -13,6 +15,9 @@ export default class ProductService {
 
 			// 	await ProductService.saveProduct(request.data);
 			// }
+
+			//initiating listing service:
+			await createListingService({action:'listProduct'});
 			return {success:true, data:request.data}
 		}
 		catch(err){
