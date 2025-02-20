@@ -1,0 +1,12 @@
+hopefully make lister work smoothly pls
+
+ask price from user
+description images extraction DONE
+3 buttons only DONE
+save after listing
+template description paragraph and title DONE
+loading while listing show more text prompts
+fixed item specifics true/false handling 
+
+subscription cancelling
+user sign up supabase stuff

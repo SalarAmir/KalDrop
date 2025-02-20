@@ -1,0 +1,337 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+<style>
+@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css);
+*{
+box-sizing: border-box;
+font-family: "Nunito", serif;
+margin: 0;
+padding: 0;
+}
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+margin: 0;
+padding: 0;
+}
+.top-header{
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 10px;
+background: #DC2941;
+}
+.top-header p{
+width: 100%;
+text-align: center;
+color: white;
+font-family: "Nunito", serif;
+font-size: 14px;
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 1rem;
+font-weight: 500;
+}
+.top-header i{
+font-size: 20px;
+}
+.outer-container{
+padding: 0 8%;
+}
+.images-container{
+border: 1px solid #DC2941;
+border-top-left-radius: 12px;
+border-top-right-radius: 12px;
+margin-top: 40px;
+padding-bottom: 30px;
+}
+.title{
+background: #DC2941;
+border-top-left-radius: 10px;
+border-top-right-radius: 10px;
+}
+.title h2{
+font-size: 22px;
+text-align: center;
+font-weight: 500;
+padding: 10px;
+font-family: "Oswald", sans-serif;
+letter-spacing: 1px;
+text-transform: uppercase;
+line-height: 1.2;
+color: #fff;
+}
+.images-container .images{
+margin-top: 30px;
+padding: 0 20px;
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+align-items: center;
+gap: 4rem;
+}
+.images-container .images img{
+width: 45%;
+height: 480px;
+border: 1px solid #c2c2c2;
+border-radius: 16px;
+object-fit: contain;
+}
+/* Description Start*/
+.description-container{
+border: 1px solid #DC2941;
+border-top-left-radius: 12px;
+border-top-right-radius: 12px;
+margin-top: 30px;
+padding-bottom: 30px;
+}
+.description-container .text{
+margin-top: 30px;
+padding: 0 20px;
+}
+.description-container .text p{
+font-size: 16px;
+font-family: "Nunito", serif;
+margin-top: 20px;
+line-height: 1.6;
+color: #000000;
+}
+.same-container{
+border: 1px solid #DC2941;
+border-top-left-radius: 12px;
+border-top-right-radius: 12px;
+margin-top: 30px;
+padding-bottom: 30px;
+}
+.same-container .text{
+margin-top: 20px;
+padding: 0 20px;
+display: grid;
+grid-template-columns: 1fr 1fr;
+}
+.same-container .text p{
+font-size: 16px;
+font-family: "Nunito", serif;
+margin-top: 15px;
+line-height: 1.6;
+color: #000000;
+}
+.same-container .text p span{
+font-size: 16px;
+font-family: "Nunito", serif;
+margin-left: 15px;
+}
+.same-container .text .icon{
+display: flex;
+justify-content: right;
+align-items: center;
+}
+.same-container .text .icon img{
+width: 30%;
+}
+.same-container:nth-child(3) .text .icon img{
+width: 35%;
+}
+.same-container:nth-child(5) .text .icon img{
+width: 35%;
+}
+footer{
+background: #DC2941;
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 10px;
+margin-top: 40px;
+}
+footer p{
+font-size: 14px;
+color: #fff;
+font-weight: 500;
+font-family: "Nunito", serif;
+}
+@media(max-width:1024px){
+.images-container .images img{
+height: 380px;
+}
+}
+@media(max-width:991px){
+.images-container .images img{
+height: 340px;
+}
+}
+@media(max-width:768px){
+.outer-container{
+padding: 0 12px;
+}
+.title h2{
+font-size: 20px;
+padding: 10px;
+}
+.images-container .images{
+margin-top: 20px;
+padding: 0 10px;
+gap: 2rem;
+}
+.images-container .images img{
+height: 320px;
+}
+.same-container .text{
+grid-template-columns: 1fr;
+gap: 2rem;
+}
+.same-container .text .icon{
+justify-content: center;
+}
+.same-container .text p span{
+font-size: 14px;
+font-family: "Nunito", serif;
+}
+}
+@media(max-width:600px){
+.images-container .images img{
+width: 100%;
+height: auto;
+}
+.same-container .text .icon img{
+width: 50%;
+}
+.same-container:nth-child(3) .text .icon img {
+width: 55%;
+}
+.same-container:nth-child(5) .text .icon img {
+width: 55%;
+}
+}
+</style>
+<div class="main-container">
+<div class="top-header">
+<p><i class="fa-regular fa-paper-plane" style="color: #fff;"></i>Welcome to Our EBAY STORE</p>
+</div>
+<div class="outer-container">
+<!-- Image Start -->
+<div class="images-container">
+<div class="title">
+<h2>[TagBot! Title=]</h2>
+</div>
+<div class="images">
+<img src="[Vendra Image 1]" alt="image1">
+<img src="[Vendra Image 2]" alt="image2">
+<img src="[Vendra Image 3]" alt="image3">
+<img src="[Vendra Image 4]" alt="image4">
+</div>
+</div>
+<!-- Image End -->
+<!-- Description Start -->
+<div class="description-container">
+<div class="title">
+<h2>Description</h2>
+</div>
+<div class="text">
+<p>[Vendra Description 1]</p>
+<p>[Vendra Description 2]</p>
+<p>[Vendra Description 3]</p>
+<p>[Vendra Description 4]</p>
+<p>[Vendra Description 5]</p>
+<p>[Vendra Description 6]</p>
+<p>[Vendra Description 7]</p>
+<p>[Vendra Description 8]</p>
+<p>[Vendra Description 9]</p>
+<p>[Vendra Description 10]</p>
+</div>
+</div>
+<!-- Description Start -->
+<!-- Shipping Start -->
+<div class="same-container">
+<div class="title">
+<h2>Shipping</h2>
+</div>
+<div class="text">
+<div>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>Fast Shipping is very important for us.</span></p>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>Our standard shipping is FREE.</span></p>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>Your order will be shipped within 2-3 business days upon full payment received.</span></p>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>We are not responsible for undeliverable addresses.</span></p>
+</div>
+<div class="icon">
+<img src="https://live.staticflickr.com/65535/53855307336_d0f33dc8d3.jpg" alt="">
+</div>
+</div>
+</div>
+<!-- Shipping End -->
+<!-- Returns Start -->
+<div class="same-container">
+<div class="title">
+<h2>Returns</h2>
+</div>
+<div class="text">
+<div>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>If you are not satisfied with your purchase, within 30 days from the delivery date you can apply for a refund as per eBay Money Back guarantee scheme. Just return the (unused) items and we will remit your account for the full amount of the purchase.</span></p>
+</div>
+<div class="icon">
+<img src="https://live.staticflickr.com/65535/53855290891_fdce1121bd.jpg" alt="">
+</div>
+</div>
+</div>
+<!-- Returns End -->
+<!-- Payment Start -->
+<div class="same-container">
+<div class="title">
+<h2>Payment</h2>
+</div>
+<div class="text">
+<div>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>We accept eBay payments such as PayPal, Google Pay, Via, Master and American Cards etc.</span></p>
+</div>
+<div class="icon">
+<img src="https://live.staticflickr.com/65535/53855563128_4202716e1e.jpg" alt="">
+</div>
+</div>
+</div>
+<!-- Payment End -->
+<!-- Feedback Start -->
+<div class="same-container">
+<div class="title">
+<h2>Feedback</h2>
+</div>
+<div class="text">
+<div>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>Your feedback very important to us, after you get your package and you are satisfied with our service please leave us positive feedback.</span></p>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>If you have any problem with your order/any questions please message us before leaveing any type of feedback.</span></p>
+</div>
+<div class="icon">
+<img src="https://live.staticflickr.com/65535/53854419297_8a49d5ee88.jpg" alt="">
+</div>
+</div>
+</div>
+<!-- Feedback End -->
+<!-- Contact Start -->
+<div class="same-container">
+<div class="title">
+<h2>Contact Us</h2>
+</div>
+<div class="text">
+<div>
+<p><i class="fa-solid fa-star" style="color: #DC2941;"></i><span>If you have any questions related to our products or shipping methods, please don't hesitate to contact us through eBay message.</span></p>
+</div>
+<div class="icon">
+<img src="https://live.staticflickr.com/65535/53855307311_3e3a31a4bf.jpg" alt="">
+</div>
+</div>
+</div>
+<!-- Contact End -->
+</div>
+<footer>
+<p>Copyright 2024 <b>UN</b>. All rights reserved.</p>
+</footer>
+</div>

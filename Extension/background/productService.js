@@ -5,13 +5,14 @@ export default class ProductService {
 	static async extractProduct(request){
 		try{
 			console.log("[extractProductService] Request:", request);
-			const added = await StorageService.addProductToArray(request.data);
+			await StorageService.addProductToArray(request.data);
+			
 			// const lastProd = await StorageService.getLatestProduct()	
-			console.log("[extractProductService] Added:", added);
-			if(added){
+			// console.log("[extractProductService] Added:", added);
+			// if(added){
 
-				await ProductService.saveProduct(request.data);
-			}
+			// 	await ProductService.saveProduct(request.data);
+			// }
 			return {success:true, data:request.data}
 		}
 		catch(err){
