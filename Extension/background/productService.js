@@ -17,7 +17,7 @@ export default class ProductService {
 			// }
 
 			//initiating listing service:
-			await createListingService({action:'listProduct'});
+			// await createListingService({action:'listProduct'});
 			return {success:true, data:request.data}
 		}
 		catch(err){

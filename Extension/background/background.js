@@ -7,7 +7,14 @@ import tabCommunication from "./tabCommunication.js";
 
 //clear products:
 // StorageService.remove('extractedProducts');
-
+// StorageService.clearProducts().then(() => {
+//     console.log('Storage cleared successfully.');
+// }).catch((error) => {
+//     console.error('Error clearing storage:', error);
+// });
+StorageService.get('extractedProducts').then((data)=>{
+    console.log("[Background] Extracted products:", data);
+})
 class Auth{
     constructor(){
         this.frontendDomain = process.env.FRONTEND_DOMAIN;

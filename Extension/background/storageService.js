@@ -42,15 +42,6 @@ export default class StorageService {
         return false;
     };
 
-    // static async appendToProductArray(products){
-    //     const oldProducts = await this.get('extractedProducts') || [];
-    //     //avoid duplicates:
-    //     console.log('oldProducts:', products);
-    //     const newProducts = products.filter(newProd => !oldProducts.some(oldProd => newProd.url === oldProd.url));
-    //     console.log('newProducts:', newProducts);
-    //     await this.set('extractedProducts', newProducts);
-    // }
-
     static async getProductById(id) {
         console.log(`[StorageService.getProductById] Fetching product with id: ${id}`);
         const products = await this.get('extractedProducts') || [];
@@ -60,4 +51,15 @@ export default class StorageService {
     static async getLatestProduct() {
         return await this.get('lastExtractedProduct');
     };
+
+    static async clearProducts() {
+        try {
+            await this.remove('extractedProducts');
+            await this.remove('lastExtractedProduct');
+            console.log('[StorageService.clearProducts] Successfully cleared products.');
+        } catch (error) {
+            console.error('[StorageService.clearProducts] Error:', error);
+            throw error;
+        }
+    }
 }

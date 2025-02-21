@@ -12,14 +12,15 @@
   </header>
   <div class="container">
     <button id="extractBtn" class="btn" disabled="true">Extract Product</button>
-    <div id="profitInfo" class="card" style="display: none;">
-      <div class="text-secondary">Cost Price: <span id="costPrice">$0.00</span></div>
-      <div class="text-secondary">Selling Price: <span id="sellingPrice">$0.00</span></div>
-      <div class="text-secondary">Estimated Profit: <span id="profit">$0.00</span></div>
+    <div class="options-container hidden" id="optionsContainer">
+      <div class="input-group">
+        <label for="price">Price:</label>
+        <input type="number" id="price" name="price" required>
+      </div>
+      <button id="advancedOptionsBtn" class="btn btn--secondary">Advanced Options</button>
+      <button id="listBtn" class="btn">Proceed with Listing</button>
     </div>
-    <button id="listBtn" class="btn hidden" disabled="true">List on eBay</button>
-    <button id="advancedOptionsBtn" class="btn hidden" disabled="true">Advanced Options</button>
-    <button id="dashboardBtn" class="btn">Dashboard</button>
+    <button id="dashboardBtn" class="btn btn--secondary">Dashboard</button>
     <div id="status" class="status"></div>
   </div>
   <script src="../popup.bundle.js"></script>

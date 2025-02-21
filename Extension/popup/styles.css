@@ -13,7 +13,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  width: 420px;
+  width: 300px;
   padding: calc(var(--spacing-unit) * 2);
   background-color: var(--background-color);
   color: var(--text-primary);
@@ -73,24 +73,47 @@ body {
   cursor: not-allowed;
   transform: none;
 }
+
+.btn--secondary {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn--secondary:hover {
+  background-color: var(--surface-color);
+}
+
 .hidden {
   display: none;
 }
 
-/* Cards */
-.card {
-  background-color: var(--surface-color);
-  border-radius: 8px;
-  padding: calc(var(--spacing-unit) * 2);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+/* Input Group */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+  margin-bottom: calc(var(--spacing-unit) * 2);
 }
 
-/* Status messages */
+.input-group label {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.input-group input {
+  padding: calc(var(--spacing-unit) * 1);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Status Messages */
 .status {
   font-size: 0.875rem;
   padding: var(--spacing-unit);
   border-radius: 4px;
+  text-align: center;
 }
 
 .status--error {
@@ -102,89 +125,3 @@ body {
   color: var(--success-color);
   background-color: rgba(40, 167, 69, 0.1);
 }
-
-/* Text */
-.text-secondary {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-  /* Table Styles */
-.table-container {
-  overflow-x: auto;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--surface-color);
-  font-size: 0.875rem;
-}
-
-.table th,
-.table td {
-  padding: calc(var(--spacing-unit) * 1.5);
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table th {
-  background-color: var(--background-color);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tr:hover {
-  background-color: var(--background-color);
-}
-
-.specification-item,
-.image-item {
-  margin-bottom: 10px;
-}
-
-.image-preview {
-  display: block;
-  max-width: 100px;
-  max-height: 100px;
-  margin-top: 5px;
-}
-
-.btn--danger {
-  background-color: #ff4d4d;
-  color: white;
-}
-
-.btn--secondary {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-/* Action Buttons */
-/* .btn-group {
-  display: flex;
-  gap: var(--spacing-unit);
-}
-
-.btn--small {
-  padding: calc(var(--spacing-unit) * 0.75) var(--spacing-unit);
-  font-size: 0.75rem;
-}
-
-.btn--list {
-  background-color: var(--primary-color);
-}
-
-.btn--delete {
-  background-color: var(--error-color);
-}
-
-.btn--save {
-  background-color: var(--success-color);
-} */

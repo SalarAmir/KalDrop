@@ -46,6 +46,10 @@ async function createListingService(request) {
             prodToList = await StorageService.getProductById(request.id);
         }
 
+        if(request.price){
+            prodToList.price = request.price;
+        }
+
         //uploader settings handling
         const uploader_settings = await API.get('/uploader-settings');
         // console.log('[createListingService] Uploader settings:', uploader_settings);
@@ -113,10 +117,10 @@ class ListingService{
             {func: this.similarProducts, name: 'similarProducts', type: "optional"},
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
-            {func: this.fillImages, name: 'fillImages', type: "required"},
+            // {func: this.fillImages, name: 'fillImages', type: "required"},
             {func: this.setPricing, name:'setPricing', type:'optional'},
-            {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
-            {func: this.setTemplate, name: 'setTemplate', type: "optional"},
+            // {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
+            // {func: this.setTemplate, name: 'setTemplate', type: "optional"},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }

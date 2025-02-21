@@ -531,15 +531,16 @@ export class EbayListingAutomator {
             }
             console.log('Price input:', priceInput);
             priceInput.value = requestData.price;
-            priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+            // priceInput.dispatchEvent(new Event('input', { bubbles: true }));
 
             const quantityInput = this.findElement('input[name="quantity"]');
             if(!quantityInput){
                 console.error('Quantity input not found');
-                return;
+                // return;
+            }else{
+                quantityInput.value = requestData.quantity;
+                quantityInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            quantityInput.value = requestData.quantity;
-            quantityInput.dispatchEvent(new Event('input', { bubbles: true }));
             console.log('Pricing filled');
         }
 
