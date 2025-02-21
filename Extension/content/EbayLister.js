@@ -387,7 +387,7 @@ export class EbayListingAutomator {
     async fillSpecifics(requestData) {
         await this.getSpecifics();
         const specifics = requestData.specifics;
-        const customSpecifics = [];
+        // const customSpecifics = [];
         for (const key in specifics) {
             const specific = this.pageInfo.specifics[key];
             if (!specific) {
@@ -473,6 +473,9 @@ export class EbayListingAutomator {
 
     async setTemplate(requestData){
         //requestData: {template: ""}
+        // if((!requestData.template) || requestData.template === "" || requestData.template === undefined){
+        //     throw new Error('Template not provided');
+        // }
 
         //input with name descriptionEditorMode
         const showHTMLButton = await this.waitAndFindElement('input[name="descriptionEditorMode"]');

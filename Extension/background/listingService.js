@@ -2,7 +2,6 @@ import API from './API.js';
 import tabCommunication from './tabCommunication.js';
 import StorageService from './storageService.js';
 import { ElementNotFoundError } from './customErrors.js';
-import _ from 'lodash';
 
 async function saveProductService(request) {
     try {
@@ -124,10 +123,10 @@ class ListingService{
             {func: this.similarProducts, name: 'similarProducts', type: "optional"},
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
-            // {func: this.fillImages, name: 'fillImages', type: "required"},
+            {func: this.fillImages, name: 'fillImages', type: "required"},
             {func: this.setPricing, name:'setPricing', type:'optional'},
-            // {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
-            // {func: this.setTemplate, name: 'setTemplate', type: "optional"},
+            {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
+            {func: this.setTemplate, name: 'setTemplate', type: "optional"},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
@@ -349,6 +348,9 @@ class ListingService{
 
     async setTemplate(productData){
         this.nextWaitReload = false;
+        if(!productData.template){
+            return {success:true};
+        }
         console.log('[ListingService] Setting template:', productData.template);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'setTemplate',
