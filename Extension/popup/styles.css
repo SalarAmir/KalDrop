@@ -84,6 +84,24 @@ body {
   background-color: var(--surface-color);
 }
 
+.btn--success {
+  background-color: var(--success-color);
+  color: var(--surface-color);
+}
+
+.btn--success:hover {
+  background-color: #218838;
+}
+
+.btn--danger {
+  background-color: var(--error-color);
+  color: var(--surface-color);
+}
+
+.btn--danger:hover {
+  background-color: #c82333;
+}
+
 .hidden {
   display: none;
 }
@@ -124,4 +142,63 @@ body {
 .status--success {
   color: var(--success-color);
   background-color: rgba(40, 167, 69, 0.1);
+}
+
+/* Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-group input {
+  padding: calc(var(--spacing-unit) * 1);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+/* Dynamic Input Containers */
+.dynamic-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.specification-item,
+.image-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+}
+
+.specification-item input,
+.image-item input {
+  flex: 1;
+}
+
+.image-preview {
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  margin-top: var(--spacing-unit);
 }

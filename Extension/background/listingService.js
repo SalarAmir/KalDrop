@@ -2,6 +2,7 @@ import API from './API.js';
 import tabCommunication from './tabCommunication.js';
 import StorageService from './storageService.js';
 import { ElementNotFoundError } from './customErrors.js';
+import _ from 'lodash';
 
 async function saveProductService(request) {
     try {
@@ -40,11 +41,17 @@ async function createListingService(request) {
     try{
         console.log('[createListingService] Started with request:', request);
         let prodToList;
-        if(request.id === undefined){
-            prodToList = await StorageService.getLatestProduct();
+        if(request.productData){
+            prodToList = request.productData;
+            await StorageService.addProductToArray(prodToList);
         }else{
-            prodToList = await StorageService.getProductById(request.id);
+            if(request.id === undefined){
+                prodToList = await StorageService.getLatestProduct();
+            }else{
+                prodToList = await StorageService.getProductById(request.id);
+            }
         }
+
 
         if(request.price){
             prodToList.price = request.price;

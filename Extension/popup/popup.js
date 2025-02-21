@@ -125,6 +125,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
     console.log('response from content:', response);
     if (response.success) {
+      await chrome.storage.local.set({ currentProductData: response.data });
+
       optionsContainer.classList.remove('hidden');
       currentProductData = response.data;
       listBtn.disabled = false;
@@ -162,8 +164,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Advanced Options button (placeholder for future functionality)
   advancedOptionsBtn.addEventListener('click', () => {
-    status.textContent = 'Advanced options will be added later.';
-    status.className = 'status--success';
+    // status.textContent = 'Advanced options will be added later.';
+    // status.className = 'status--success';
+    window.location.href = 'edit_product.html';
+
   });
 
   // Dashboard button

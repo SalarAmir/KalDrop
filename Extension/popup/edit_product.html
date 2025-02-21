@@ -1,60 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <button id="backBtn" class="btn">Back</button>
-        <h1>Edit Product</h1>
+        <button id="backBtn" class="btn btn--secondary">Back</button>
+        <h1 class="header__title">Edit Product</h1>
         
-        <form id="editProductForm">
-            <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" name="title" required>
-            </div>
+        <form id="editProductForm" class="form">
+        <!-- Basic Product Details -->
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+        </div>
 
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input type="number" id="price" name="price" required>
-            </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" id="price" name="price" required>
+        </div>
 
-            <div class="form-group">
-                <label for="originalPrice">Original Price</label>
-                <input type="number" id="originalPrice" name="originalPrice" required>
-            </div>
+        <!-- <div class="form-group">
+            <label for="originalPrice">Original Price</label>
+            <input type="number" id="originalPrice" name="originalPrice" required>
+        </div>
 
-            <div class="form-group">
-                <label for="sellingPrice">Selling Price</label>
-                <input type="number" id="sellingPrice" name="sellingPrice" required>
-            </div>
+        <div class="form-group">
+            <label for="sellingPrice">Selling Price</label>
+            <input type="number" id="sellingPrice" name="sellingPrice" required>
+        </div> -->
 
-            <div class="form-group">
-                <label for="url">URL</label>
-                <input type="url" id="url" name="url" required>
-            </div>
+        <div class="form-group">
+            <label for="url">URL</label>
+            <input type="url" id="url" name="url" required>
+        </div>
 
-            <div class="form-group">
-                <label for="supplier">Supplier</label>
-                <input type="text" id="supplier" name="supplier" required>
-            </div>
+        <div class="form-group">
+            <label for="supplier">Supplier</label>
+            <input type="text" id="supplier" name="supplier" required>
+        </div>
 
-            <!-- Specifications Section -->
-            <div class="form-group">
-                <label>Specifications</label>
-                <div id="specificationsContainer"></div>
-                <button type="button" id="addSpecificationBtn" class="btn btn--secondary">Add Specification</button>
-            </div>
+        <!-- Specifications Section -->
+        <div class="form-group">
+            <label>Specifications</label>
+            <div id="specificationsContainer" class="dynamic-input-container"></div>
+            <button type="button" id="addSpecificationBtn" class="btn btn--secondary">Add Specification</button>
+        </div>
 
-            <!-- Image URLs Section -->
-            <div class="form-group">
-                <label>Image URLs</label>
-                <div id="imagesContainer"></div>
-                <button type="button" id="addImageBtn" class="btn btn--secondary">Add Image URL</button>
-            </div>
+        <!-- Image URLs Section -->
+        <div class="form-group">
+            <label>Image URLs</label>
+            <div id="imagesContainer" class="dynamic-input-container"></div>
+            <button type="button" id="addImageBtn" class="btn btn--secondary">Add Image URL</button>
+        </div>
 
-            <button type="button" id="saveAndListBtn" class="btn btn--success">Save and List</button>
+        <!-- Save and List Button -->
+        <button type="button" id="saveAndListBtn" class="btn btn--success">Save and List</button>
         </form>
     </div>
     <script src="../edit_product.bundle.js"></script>

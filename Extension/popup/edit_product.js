@@ -10,14 +10,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Populate form fields
-  document.getElementById('title').value = currentProductData.title;
-  document.getElementById('price').value = currentProductData.price;
-  document.getElementById('originalPrice').value = currentProductData.originalPrice;
-  document.getElementById('sellingPrice').value = currentProductData.sellingPrice;
-  document.getElementById('url').value = currentProductData.url;
-  document.getElementById('supplier').value = currentProductData.supplier;
+  document.getElementById('title').value = currentProductData.title || '';
+  document.getElementById('price').value = currentProductData.price || '';
+  // document.getElementById('originalPrice').value = currentProductData.originalPrice || '';
+  // document.getElementById('sellingPrice').value = currentProductData.sellingPrice || '';
+  document.getElementById('url').value = currentProductData.url || '';
+  document.getElementById('supplier').value = currentProductData.supplier || '';
 
-  // Populate specifications
+  // Specifications Section
   const specificationsContainer = document.getElementById('specificationsContainer');
   const addSpecificationBtn = document.getElementById('addSpecificationBtn');
 
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Populate image URLs
+  // Image URLs Section
   const imagesContainer = document.getElementById('imagesContainer');
   const addImageBtn = document.getElementById('addImageBtn');
 
@@ -103,19 +103,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'popup.html';
   });
 
-  // Function to collect form data
+  // Collect form data
   const collectFormData = () => {
     const title = document.getElementById('title').value;
     const price = document.getElementById('price').value;
-    const originalPrice = document.getElementById('originalPrice').value;
-    const sellingPrice = document.getElementById('sellingPrice').value;
+    // const originalPrice = document.getElementById('originalPrice').value;
+    // const sellingPrice = document.getElementById('sellingPrice').value;
     const url = document.getElementById('url').value;
     const supplier = document.getElementById('supplier').value;
 
     // Collect specifications
     const specifications = {};
-    const specificationItems = document.querySelectorAll('.specification-item');
-    specificationItems.forEach(item => {
+    document.querySelectorAll('.specification-item').forEach(item => {
       const key = item.querySelector('input[type="text"]').value;
       const value = item.querySelectorAll('input[type="text"]')[1].value;
       if (key && value) {
@@ -125,8 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Collect image URLs
     const images = [];
-    const imageItems = document.querySelectorAll('.image-item');
-    imageItems.forEach(item => {
+    document.querySelectorAll('.image-item').forEach(item => {
       const imageUrl = item.querySelector('input[type="url"]').value;
       if (imageUrl) {
         images.push(imageUrl);
@@ -136,8 +134,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     return {
       title,
       price,
-      originalPrice,
-      sellingPrice,
+      // originalPrice,
+      // sellingPrice,
       url,
       supplier,
       specifications,
@@ -145,47 +143,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   };
 
-  // Save Changes handler
-  const form = document.getElementById('editProductForm');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const updatedProduct = collectFormData();
-    console.log('Updated product:', updatedProduct);
-
-    // Save the updated product data back to chrome.storage.local
-    await chrome.storage.local.set({ currentProductData: updatedProduct });
-
-    // Optionally, send a message to the background script to update the product in storage
-    const resp = await chrome.runtime.sendMessage({
-      action: 'updateProduct',
-      product: updatedProduct,
-    });
-
-    console.log('Form submitted:', resp);
-
-    // Navigate back to the popup after saving
-    window.location.href = 'popup.html';
-  });
-
   // Save and List handler
   const saveAndListBtn = document.getElementById('saveAndListBtn');
   saveAndListBtn.addEventListener('click', async () => {
-    const updatedProduct = collectFormData();
-    console.log('Updated product:', updatedProduct);
+    const updatedProduct = {...currentProductData,...collectFormData()};
+    // await chrome.storage.local.set({ currentProductData: updatedProduct });
 
-    // Save the updated product data back to chrome.storage.local
-    await chrome.storage.local.set({ currentProductData: updatedProduct });
-
-    // Send a message to the background script to list the product
     const resp = await chrome.runtime.sendMessage({
       action: 'listProduct',
       productData: updatedProduct,
     });
 
     if (resp.success) {
-      console.log('Product listed successfully:', resp);
-      window.location.href = 'popup.html'; // Navigate back to the popup
+      window.location.href = 'popup.html';
     } else {
       console.error('Error listing product:', resp.error);
     }
