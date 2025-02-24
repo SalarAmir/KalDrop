@@ -1,6 +1,6 @@
 :root {
   --primary-color: #4a4a4a;
-  --hover-color: #2d2d2d;
+  --hover-color: #4f6ed3;
   --background-color: #fafafa;
   --surface-color: #ffffff;
   --border-color: #e0e0e0;
@@ -13,7 +13,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  width: 300px;
+  width: 500px;
   padding: calc(var(--spacing-unit) * 2);
   background-color: var(--background-color);
   color: var(--text-primary);
@@ -188,6 +188,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-unit);
+  background-color: var(--background-color);
 }
 
 .specification-item input,

@@ -96,10 +96,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 */
+import logo from '../assets/Vendra.png'; // Webpack processes this file
+
+
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Popup loaded');
 
+  const imgElement = document.createElement('img');
+  imgElement.src = logo; 
+  imgElement.alt = 'Logo';
+  imgElement.width = 200;
+  imgElement.width = 200;
+  imgElement.style.display = 'block';
+  imgElement.style.margin = '0 auto';
+
+  // Append the image to a container in popup.html
+  document.getElementById('header').appendChild(imgElement);
+  
   const extractBtn = document.getElementById('extractBtn');
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

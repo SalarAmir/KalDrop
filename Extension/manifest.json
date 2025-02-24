@@ -24,6 +24,11 @@
       "js": ["content.bundle.js"]
     }],
     "action": {
-      "default_popup": "popup/popup.html"
+      "default_popup": "popup/popup.html",
+      "default_icon": {
+      "16": "assets/Vendra.png",
+      "48": "assets/Vendra.png",
+      "128": "assets/Vendra.png"
+    }
     }
   }

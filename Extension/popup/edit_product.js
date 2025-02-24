@@ -57,9 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const div = document.createElement('div');
     div.className = 'image-item';
     div.innerHTML = `
-      <input type="url" placeholder="Image URL" value="${url}">
-      <button type="button" class="btn btn--danger removeImageBtn">Remove</button>
-      ${url ? `<img src="${url}" alt="Preview" class="image-preview">` : ''}
+      ${url ? `<img src="${url}" alt="Preview" class="image-preview">
+        <button type="button" class="btn btn--danger removeImageBtn">Remove</button>` : ''}
     `;
     imagesContainer.appendChild(div);
   };
