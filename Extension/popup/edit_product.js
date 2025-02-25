@@ -57,11 +57,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const div = document.createElement('div');
     div.className = 'image-item';
     div.innerHTML = `
-      ${url ? `<img src="${url}" alt="Preview" class="image-preview">
-        <button type="button" class="btn btn--danger removeImageBtn">Remove</button>` : ''}
+      <input type="url" placeholder="Image URL" value="${url}" class="image-url-input">
+      ${url ? `<img src="${url}" alt="Preview" class="image-preview">` : ''}
+      <button type="button" class="btn btn--danger removeImageBtn">Remove</button>
     `;
     imagesContainer.appendChild(div);
-  };
+};
 
   // Render existing image URLs
   (currentProductData.images || []).forEach(url => {
@@ -124,10 +125,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Collect image URLs
     const images = [];
     document.querySelectorAll('.image-item').forEach(item => {
-      const imageUrl = item.querySelector('input[type="url"]').value;
-      if (imageUrl) {
-        images.push(imageUrl);
-      }
+        const imageInput = item.querySelector('.image-url-input');
+        if (imageInput && imageInput.value) {
+            images.push(imageInput.value);
+        }
     });
 
     return {
