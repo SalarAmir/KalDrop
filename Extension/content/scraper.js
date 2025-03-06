@@ -175,13 +175,13 @@ export class AliExpressScraper {
   }
 
   calculateProfit(price, shippingCost) {
-    const markup = 1.3; // 30% markup
+    const markup = 1.25; // 25% markup
     const ebayFee = 0.1; // 10% eBay fee
     const paypalFee = 0.029; // 2.9% PayPal fee
 
     const basePrice = price + shippingCost;
     const sellingPrice = basePrice * markup;
-    const fees = (sellingPrice * ebayFee) + (sellingPrice * paypalFee);
+    const fees = (sellingPrice * ebayFee)  ;
     const profit = sellingPrice - basePrice - fees;
 
     return {
