@@ -30,7 +30,7 @@ export class EbayListingAutomator {
             'selectDropdownOption': this.selectDropdownOption.bind(this),
             'fillPricing': this.fillPricing.bind(this),
             'setTemplate': this.setTemplate.bind(this),
-            'automatePromotedListingSettings': this.automatePromotedListingSettings.bind(this),
+            // 'automatePromotedListingSettings': this.automatePromotedListingSettings.bind(this),
             'listingComplete': this.listingComplete.bind(this),
         };
         console.log('EbayListingAutomator initialized.');
@@ -89,11 +89,13 @@ export class EbayListingAutomator {
         let found = false;
         for (const element of elements) {
             if (element.textContent.trim() === requestData.text.trim()) {
+                // console.log('Element found with text:', element);
                 found = true;
                 targetElement = element;
                 if(found){
-                    console.warn('Multiple elements found with the same text ', requestData.text);
+                    console.warn('Multiple elements found with the same text', requestData.text);
                 }
+                targetElement.click();
                 // break;
             }
         }
@@ -101,8 +103,8 @@ export class EbayListingAutomator {
         if (!targetElement) {
             throw new Error(`Element not found with text: ${requestData.text}`);
         }
-
         targetElement.click();
+
         return true;
     }
 
@@ -388,11 +390,12 @@ export class EbayListingAutomator {
     async fillSpecifics(requestData) {
         await this.getSpecifics();
         const specifics = requestData.specifics;
-        // const customSpecifics = [];
+        const customSpecifics = {};
         for (const key in specifics) {
             const specific = this.pageInfo.specifics[key];
             if (!specific) {
                 console.error(`Specific not found in page: ${key}`);
+                customSpecifics[key] = specifics[key];
                 continue;
             }
     
@@ -445,6 +448,27 @@ export class EbayListingAutomator {
                     break;
             }
         }
+
+        // Fill custom specifics
+        for(const key in customSpecifics){
+            console.log('Filling custom specific:', key, 'with value:', customSpecifics[key]);
+            this.clickElementText({text: 'Add custom item specific'});
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const nameInput = document.querySelector('#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-name-se-textbox');
+            const valueInput = document.querySelector('#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-value-se-textbox');
+            if(!nameInput || !valueInput){
+                console.error('Custom specific inputs not found');
+                return;
+            }
+            nameInput.value = key;
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            valueInput.value = customSpecifics[key];
+            valueInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+            this.clickElementText({text: 'Save'});
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         return true;
     }
     async handleSearchInput(searchDiv,searchInput, value) {
@@ -703,7 +727,7 @@ export class EbayListingAutomator {
     }
     
     */
-    async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
+    async waitAndFindElement(selector, timeout = 5000, selectorType = 'query', context = document) {
         console.log('Waiting for element:', selector);
         const checkForElement = () => {
             let element = null;

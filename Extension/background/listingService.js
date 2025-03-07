@@ -58,9 +58,26 @@ async function createListingService(request) {
 
         //uploader settings handling
         const uploader_settings = await API.get('/uploader-settings');
+
+        if(uploader_settings.fixed_item_specifics == true){
+            console.log('[createListingService] fixed_item_specifcs set to true');
+            const uploaderSpecsObj = uploader_settings.item_specifics.reduce((acc, item) => {
+                const key = Object.keys(item)[0];
+                acc[key] = item[key];
+                return acc;
+            }, {});
+
+
+            // console.log('[createListingService] specifics from db:', uploader_settings.item_specifics);
+            prodToList.specifics = {...prodToList.specifications, ...uploaderSpecsObj};
+
+        }
+        else{
+            console.log('[createListingService] fixed_item_specifcs set to false');
+            prodToList.specifics = {...prodToList.specifications}
+        }
+
         // console.log('[createListingService] Uploader settings:', uploader_settings);
-        console.log('[createListingService] specifics from db:', uploader_settings.item_specifics);
-        prodToList.specifics = {...prodToList.specifications, ...uploader_settings.item_specifics};
 
         //template handling:
         const {template_settings:template} = await API.get('/template/selected-template');

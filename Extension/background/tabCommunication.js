@@ -1,5 +1,5 @@
 import { currentListingService } from "./listingService.js";
-import { ElementNotFoundError } from "./customErrors.js";
+import { ElementNotFoundError, ContentScriptError } from "./customErrors.js";
 let waitingForReload = true;
 
 export default class tabCommunication {
