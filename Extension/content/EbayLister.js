@@ -30,6 +30,7 @@ export class EbayListingAutomator {
             'selectDropdownOption': this.selectDropdownOption.bind(this),
             'fillPricing': this.fillPricing.bind(this),
             'setTemplate': this.setTemplate.bind(this),
+            'automatePromotedListingSettings': this.automatePromotedListingSettings.bind(this),
             'listingComplete': this.listingComplete.bind(this),
         };
         console.log('EbayListingAutomator initialized.');
@@ -571,6 +572,53 @@ export class EbayListingAutomator {
         this.loadingOverlay.hide();
         return true;
     }
+// // Promoted listing settings automation
+//     async automatePromotedListingSettings(requestData) {
+//         try {
+//             const adRate = requestData.adRate||12;
+//             // Step 1: Find and toggle the General section if it's not already checked
+//             const generalToggle = document.querySelector('.fai-program-wrapper:first-child .switch__control');
+//             if (generalToggle && !generalToggle.checked) {
+//                 console.log('Toggling General section on');
+//                 generalToggle.click();
+//                 // Wait for any animations or state changes
+//                 await new Promise(resolve => setTimeout(resolve, 300));
+//             } else {
+//                 console.log('General section is already toggled on');
+//             }
+    
+//             // Step 2: Find the ad rate input field and set its value
+//             const adRateInput = document.querySelector('input[name="adRate"]');
+//             if (adRateInput) {
+//                 console.log(`Setting ad rate to: ${adRate}%`);
+                
+//                 // Clear existing value
+//                 adRateInput.value = '';
+//                 adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+//                 // Set new value
+//                 adRateInput.value = adRate.toString();
+//                 adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
+//                 adRateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+//                 // Optional: Check if there's a "Apply suggested ad rate" button to click
+//                 const suggestedRateButton = document.querySelector('.pl-inline-edit-input-suggested');
+//                 if (suggestedRateButton && suggestedRateButton.textContent.includes(adRate)) {
+//                     console.log('Clicking suggested ad rate button');
+//                     suggestedRateButton.click();
+//                 }
+                
+//                 console.log('Ad rate updated successfully');
+//             } else {
+//                 console.error('Ad rate input field not found');
+//             }
+//         } catch (error) {
+//             console.error('Error automating promoted listing settings:', error);
+//         }
+//     }
+
+
+
     // Utility methods
     findElement(selector, selectorType = 'query', context = document){
         let element;
@@ -705,4 +753,6 @@ export class EbayListingAutomator {
         });
  
     }
+
+    
 }
