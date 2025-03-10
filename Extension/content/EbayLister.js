@@ -30,7 +30,7 @@ export class EbayListingAutomator {
             'selectDropdownOption': this.selectDropdownOption.bind(this),
             'fillPricing': this.fillPricing.bind(this),
             'setTemplate': this.setTemplate.bind(this),
-            // 'automatePromotedListingSettings': this.automatePromotedListingSettings.bind(this),
+            'setPromotedListing': this.automatePromotedListingSettings.bind(this),
             'listingComplete': this.listingComplete.bind(this),
         };
         console.log('EbayListingAutomator initialized.');
@@ -449,6 +449,23 @@ export class EbayListingAutomator {
             }
         }
 
+        //select suggested required specifics
+        const requiredSpecsDiv = document.querySelector(".summary__attributes--section-container")
+        const frequentlySelectedElements = Array.from(
+            requiredSpecsDiv.querySelectorAll('legend'))
+            .filter(el => el.textContent.includes('Frequently selected'))
+        
+        frequentlySelectedElements.forEach(async(el) => {
+            const buttonLink = el.parentElement.querySelector('button.fake-link');
+            if(buttonLink){
+                buttonLink.click();
+            }
+            //timeout for 100ms:
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+        })
+
+
         // Fill custom specifics
         for(const key in customSpecifics){
             console.log('Filling custom specific:', key, 'with value:', customSpecifics[key]);
@@ -462,11 +479,16 @@ export class EbayListingAutomator {
             }
             nameInput.value = key;
             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            nameInput.focus();
+            nameInput.click();
+
             valueInput.value = customSpecifics[key];
             valueInput.dispatchEvent(new Event('input', { bubbles: true }));
+            valueInput.focus();
+            valueInput.click();
 
             this.clickElementText({text: 'Save'});
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         return true;
@@ -560,7 +582,8 @@ export class EbayListingAutomator {
             console.log('Price input:', priceInput);
             priceInput.value = requestData.price;
             // priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-
+            priceInput.focus();
+            priceInput.click();
             const quantityInput = this.findElement('input[name="quantity"]');
             if(!quantityInput){
                 console.error('Quantity input not found');
@@ -596,50 +619,51 @@ export class EbayListingAutomator {
         this.loadingOverlay.hide();
         return true;
     }
-// // Promoted listing settings automation
-//     async automatePromotedListingSettings(requestData) {
-//         try {
-//             const adRate = requestData.adRate||12;
-//             // Step 1: Find and toggle the General section if it's not already checked
-//             const generalToggle = document.querySelector('.fai-program-wrapper:first-child .switch__control');
-//             if (generalToggle && !generalToggle.checked) {
-//                 console.log('Toggling General section on');
-//                 generalToggle.click();
-//                 // Wait for any animations or state changes
-//                 await new Promise(resolve => setTimeout(resolve, 300));
-//             } else {
-//                 console.log('General section is already toggled on');
-//             }
+// Promoted listing settings automation
+    async automatePromotedListingSettings(requestData) {
+        try {
+            const adRate = requestData.adRate||12;
+            // Step 1: Find and toggle the General section if it's not already checked
+            const generalToggle = document.querySelector('.fai-program-wrapper:first-child .switch__control');
+            if (generalToggle && !generalToggle.checked) {
+                console.log('Toggling General section on');
+                generalToggle.click();
+                // Wait for any animations or state changes
+                await new Promise(resolve => setTimeout(resolve, 300));
+            } else {
+                console.log('General section is already toggled on');
+            }
     
-//             // Step 2: Find the ad rate input field and set its value
-//             const adRateInput = document.querySelector('input[name="adRate"]');
-//             if (adRateInput) {
-//                 console.log(`Setting ad rate to: ${adRate}%`);
+            // Step 2: Find the ad rate input field and set its value
+            const adRateInput = document.querySelector('input[name="adRate"]');
+            if (adRateInput) {
+                console.log(`Setting ad rate to: ${adRate}%`);
                 
-//                 // Clear existing value
-//                 adRateInput.value = '';
-//                 adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
+                // Clear existing value
+                // adRateInput.value = '';
+                // adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
                 
-//                 // Set new value
-//                 adRateInput.value = adRate.toString();
-//                 adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
-//                 adRateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                // Set new value
+                adRateInput.value = adRate.toString();
+                adRateInput.dispatchEvent(new Event('input', { bubbles: true }));
+                adRateInput.dispatchEvent(new Event('change', { bubbles: true }));
                 
-//                 // Optional: Check if there's a "Apply suggested ad rate" button to click
-//                 const suggestedRateButton = document.querySelector('.pl-inline-edit-input-suggested');
-//                 if (suggestedRateButton && suggestedRateButton.textContent.includes(adRate)) {
-//                     console.log('Clicking suggested ad rate button');
-//                     suggestedRateButton.click();
-//                 }
+                // Optional: Check if there's a "Apply suggested ad rate" button to click
+                // const suggestedRateButton = document.querySelector('.pl-inline-edit-input-suggested');
+                // if (suggestedRateButton && suggestedRateButton.textContent.includes(adRate)) {
+                //     console.log('Clicking suggested ad rate button');
+                //     suggestedRateButton.click();
+                // }
                 
-//                 console.log('Ad rate updated successfully');
-//             } else {
-//                 console.error('Ad rate input field not found');
-//             }
-//         } catch (error) {
-//             console.error('Error automating promoted listing settings:', error);
-//         }
-//     }
+                console.log('Ad rate updated successfully');
+            } else {
+                console.error('Ad rate input field not found');
+            }
+        } catch (error) {
+            console.error('Error automating promoted listing settings:', error);
+        }
+        return true;
+    }
 
 
 
