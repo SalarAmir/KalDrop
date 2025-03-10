@@ -1,10 +1,11 @@
-export class LoadingOverlay{
-    constructor(){
+export class LoadingOverlay {
+    constructor() {
         this.overlay = null;
+        this.messageTimer = null;
         this.initialize();
     }
 
-    initialize(){
+    initialize() {
         this.overlay = document.createElement('div');
         this.overlay.className = 'listing-overlay';
         
@@ -64,19 +65,33 @@ export class LoadingOverlay{
         document.head.appendChild(styles);
     }
 
-    show(message = 'Processing listing...'){
-        if(!document.body.contains(this.overlay)){
+    show(message = 'Processing listing...') {
+        if (!document.body.contains(this.overlay)) {
             document.body.appendChild(this.overlay);
         }
         this.overlay.querySelector('.listing-message').textContent = message;
         this.overlay.style.display = 'flex';
+        
+        // Clear any existing timer
+        if (this.messageTimer) {
+            clearTimeout(this.messageTimer);
+        }
+        
+        // Set reassurance message after a delay
+        this.messageTimer = setTimeout(() => {
+            this.updateMessage('Don\'t worry, this may take a moment...');
+        }, 5000); // 10 seconds
     }
 
-    hide(){
+    hide() {
+        if (this.messageTimer) {
+            clearTimeout(this.messageTimer);
+            this.messageTimer = null;
+        }
         this.overlay.style.display = 'none';
     }
 
-    updateMessage(message){
+    updateMessage(message) {
         this.overlay.querySelector('.listing-message').textContent = message;
     }
 }
