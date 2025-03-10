@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   console.log('Active tab in pop:', tab);
-  if (tab.url.includes('aliexpress.com/item')) {
+  if (tab.url.includes('aliexpress')) {
     console.log('Aliexpress tab detected');
     extractBtn.disabled = false;
   }

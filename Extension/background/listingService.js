@@ -144,6 +144,7 @@ class ListingService{
             {func: this.setPricing, name:'setPricing', type:'optional'},
             {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
             {func: this.setTemplate, name: 'setTemplate', type: "optional"},
+            {func: this.promotedListing, name: 'promotedListing', type: "optional"},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
@@ -404,6 +405,18 @@ class ListingService{
         return {success:true};
     }
 
+    async promotedListing(productData){
+        this.nextWaitReload = false;
+        console.log('[ListingService] Setting promoted listing..')
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'setPromotedListing',
+            adRate: 15
+        });
+        if(!response.success){
+            return response;
+        }
+        return {success:true};
+    }
     async endListing(productData){
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'listingComplete'
