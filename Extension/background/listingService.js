@@ -140,6 +140,7 @@ class ListingService{
             {func: this.similarProducts, name: 'similarProducts', type: "optional"},
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
+            {func: this.selectConditionnew, name: 'selectConditionnew', type: "optional"},
             {func: this.fillImages, name: 'fillImages', type: "required"},
             {func: this.setPricing, name:'setPricing', type:'optional'},
             {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
@@ -265,7 +266,33 @@ class ListingService{
         // this.nextWaitReload = true;
         return { success: true };
     }
-    
+
+            // Function to click the "New without tags" button
+        async selectConditionnew() {
+            
+            const buttons = document.querySelectorAll('.condition-button-list__item .condition-button');
+
+            
+            buttons.forEach(button => {
+                if (button.querySelector('.bold-text').textContent.trim() === 'New without tags') {
+                   
+                    button.click();
+
+                    
+                    setTimeout(clickContinueButton, 500); // Adjust the delay as needed
+                }
+            });
+            const continueButton = document.querySelector('.prelist-radix__next-container .btn--primary');
+
+            
+            if (continueButton) {
+                continueButton.click();
+            }
+            return{true:true};
+        }
+
+
+            
     async selectCategory(productData){
         this.nextWaitReload = false;
         console.log("[ListingService] Looking for category popup:")
