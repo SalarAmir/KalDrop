@@ -449,6 +449,23 @@ export class EbayListingAutomator {
             }
         }
 
+        //select suggested required specifics
+        const requiredSpecsDiv = document.querySelector(".summary__attributes--section-container")
+        const frequentlySelectedElements = Array.from(
+            requiredSpecsDiv.querySelectorAll('legend'))
+            .filter(el => el.textContent.includes('Frequently selected'))
+        
+        frequentlySelectedElements.forEach(async(el) => {
+            const buttonLink = el.parentElement.querySelector('button.fake-link');
+            if(buttonLink){
+                buttonLink.click();
+            }
+            //timeout for 100ms:
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+        })
+
+
         // Fill custom specifics
         for(const key in customSpecifics){
             console.log('Filling custom specific:', key, 'with value:', customSpecifics[key]);
@@ -469,7 +486,7 @@ export class EbayListingAutomator {
             valueInput.dispatchEvent(new Event('input', { bubbles: true }));
             valueInput.focus();
             valueInput.click();
-            
+
             this.clickElementText({text: 'Save'});
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
