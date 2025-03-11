@@ -38,7 +38,16 @@ export class AliExpressScraper {
     return strippedUrl;
   }
   getTitle() {
-    const titleElement = document.querySelector('[data-pl="product-title"]');
+    let titleElement = document.querySelector('[data-pl="product-title"]');
+    if (!titleElement) {
+      titleElement = document.querySelector('.title--wrap--UUHae_g h1');
+    }
+    if (!titleElement) {
+      const titleDiv = document.querySelector('.title--wrap--UUHae_g');
+      if (titleDiv) {
+      titleElement = titleDiv.querySelector('h1');
+      }
+    }
     if (!titleElement) throw new Error('Title not found');
     return titleElement.textContent.trim();
   }
