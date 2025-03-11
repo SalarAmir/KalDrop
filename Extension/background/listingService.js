@@ -27,7 +27,6 @@ async function saveProductService(request) {
 
 let currentListingService;
 
-
 async function createListingService(request) {
     /*
     request:
@@ -109,7 +108,7 @@ async function createListingService(request) {
         
     }
     
-}
+};
 
 class ListingService{
     
@@ -505,7 +504,7 @@ class ListingService{
             return responseClick;
         }
         console.log("[ListingService] Clicked on continue button.")
-        // this.nextWaitReload = true;
+        this.nextWaitReload = true;
         return { success: true };
     }
   
@@ -531,8 +530,6 @@ class ListingService{
         console.log("[ListingService] Category selected successfully.")
         return { success: true };
     }
-    
-    
     
     async fillImages(productData){
         //wont navigate away from page
@@ -621,6 +618,7 @@ class ListingService{
         }
         return {success:true};
     }
+
     async endListing(productData){
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'listingComplete'
