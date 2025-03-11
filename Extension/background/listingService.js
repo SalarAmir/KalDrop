@@ -304,216 +304,175 @@ class ListingService{
             //     }
             //     return { true: true };
             // }
-            async selectConditionnew(productData) {
-                this.nextWaitReload = false;
-                console.log('[ListingService] Checking for condition selection page...');
+    async selectConditionnew(productData) {
+        this.nextWaitReload = false;
+        console.log('[ListingService] Checking for condition selection page...');
+        
+        try {
+            // Allow page to fully load
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Try multiple selectors to detect the condition page
+            const pageSelectors = [
+                '.prelist-radix__body-container.prelist-radix__condition-grading',
+                '.condition-button-list',
+                '.condition-picker-radix',
+                'button:contains("New without tags")',
+                'div[data-testid="condition-selector"]'
+            ];
+            
+            let pageFound = false;
+            for (const selector of pageSelectors) {
+                console.log(`[ListingService] Trying to detect condition page with selector: ${selector}`);
+                const check = await tabCommunication.sendMessage(this.listingTabId, {
+                    action: 'detectElement',
+                    selector: selector,
+                    timeout: 1000 // Short timeout for each attempt
+                });
                 
-                try {
-                    // Allow page to fully load
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    
-                    // Try multiple selectors to detect the condition page
-                    const pageSelectors = [
-                        '.prelist-radix__body-container.prelist-radix__condition-grading',
-                        '.condition-button-list',
-                        '.condition-picker-radix',
-                        'button:contains("New without tags")',
-                        'div[data-testid="condition-selector"]'
-                    ];
-                    
-                    let pageFound = false;
-                    for (const selector of pageSelectors) {
-                        console.log(`[ListingService] Trying to detect condition page with selector: ${selector}`);
-                        const check = await tabCommunication.sendMessage(this.listingTabId, {
-                            action: 'detectElement',
-                            selector: selector,
-                            timeout: 1000 // Short timeout for each attempt
-                        });
+                if (check.success) {
+                    console.log(`[ListingService] Condition page detected with selector: ${selector}`);
+                    pageFound = true;
+                    break;
+                }
+            }
+            
+            if (!pageFound) {
+                console.log('[ListingService] Condition selection page not found. Skipping...');
+                return { success: true }; // Skip if not found
+            }
+            
+            // Try multiple approaches to select condition
+            console.log('[ListingService] Trying different methods to select "New without tags"');
+            
+            // Method 1: Direct click on button with text
+            const directClick = await tabCommunication.sendMessage(this.listingTabId, {
+                action: 'clickElementText',
+                text: 'New without tags',
+                timeout: 2000
+            });
+            
+            if (!directClick.success) {
+                console.log('[ListingService] Direct click failed, trying script method');
+                
+                // Method 2: Execute script to find and click based on text content
+                const scriptClick = await tabCommunication.sendMessage(this.listingTabId, {
+                    action: 'executeScript',
+                    script: `
+                        // Try multiple selector patterns
+                        let found = false;
                         
-                        if (check.success) {
-                            console.log(`[ListingService] Condition page detected with selector: ${selector}`);
-                            pageFound = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!pageFound) {
-                        console.log('[ListingService] Condition selection page not found. Skipping...');
-                        return { success: true }; // Skip if not found
-                    }
-                    
-                    // Try multiple approaches to select condition
-                    console.log('[ListingService] Trying different methods to select "New without tags"');
-                    
-                    // Method 1: Direct click on button with text
-                    const directClick = await tabCommunication.sendMessage(this.listingTabId, {
-                        action: 'clickElementText',
-                        text: 'New without tags',
-                        timeout: 2000
-                    });
-                    
-                    if (!directClick.success) {
-                        console.log('[ListingService] Direct click failed, trying script method');
-                        
-                        // Method 2: Execute script to find and click based on text content
-                        const scriptClick = await tabCommunication.sendMessage(this.listingTabId, {
-                            action: 'executeScript',
-                            script: `
-                                // Try multiple selector patterns
-                                let found = false;
-                                
-                                // Try condition buttons
-                                const buttons = document.querySelectorAll('button, .condition-button, [role="button"]');
-                                for (const button of buttons) {
-                                    if (button.textContent && button.textContent.includes('New without tags')) {
-                                        console.log('Found button with text: New without tags');
-                                        button.click();
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                
-                                // Try radio buttons or options
-                                if (!found) {
-                                    const options = document.querySelectorAll('input[type="radio"], .radio-input');
-                                    for (const option of options) {
-                                        const label = option.closest('label') || 
-                                                     document.querySelector('label[for="' + option.id + '"]');
-                                        if (label && label.textContent.includes('New without tags')) {
-                                            console.log('Found radio option: New without tags');
-                                            option.click();
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                return found;
-                            `
-                        });
-                        
-                        if (!scriptClick.success || scriptClick.result === false) {
-                            console.log('[ListingService] Failed to select "New without tags" condition');
-                            
-                            // Continue anyway as this might be optional
-                            console.log('[ListingService] Continuing despite condition selection failure');
-                            
-                            // Try to continue without selecting condition
-                            const skipClick = await tabCommunication.sendMessage(this.listingTabId, {
-                                action: 'clickElementText',
-                                text: 'Continue',
-                                timeout: 2000
-                            });
-                            
-                            if (skipClick.success) {
-                                console.log('[ListingService] Clicked continue button without selecting condition');
-                                this.nextWaitReload = true;
-                                return { success: true };
+                        // Try condition buttons
+                        const buttons = document.querySelectorAll('button, .condition-button, [role="button"]');
+                        for (const button of buttons) {
+                            if (button.textContent && button.textContent.includes('New without tags')) {
+                                console.log('Found button with text: New without tags');
+                                button.click();
+                                found = true;
+                                break;
                             }
-                            
-                            return { success: true }; // Continue anyway
                         }
-                    }
-                    
-                    // Wait for selection to register
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Try multiple continue button approaches
-                    const continueSelectors = [
-                        '.prelist-radix__next-container .btn--primary',
-                        'button:contains("Continue")',
-                        '.action-button',
-                        '.btn-continue',
-                        '.next-button'
-                    ];
-                    
-                    for (const selector of continueSelectors) {
-                        console.log(`[ListingService] Trying to click continue with selector: ${selector}`);
-                        const continueClick = await tabCommunication.sendMessage(this.listingTabId, {
-                            action: 'clickElement',
-                            selector: selector,
-                            timeout: 1000
-                        });
                         
-                        if (continueClick.success) {
-                            console.log('[ListingService] Continue button clicked successfully');
-                            this.nextWaitReload = true;
-                            return { success: true };
+                        // Try radio buttons or options
+                        if (!found) {
+                            const options = document.querySelectorAll('input[type="radio"], .radio-input');
+                            for (const option of options) {
+                                const label = option.closest('label') || 
+                                                document.querySelector('label[for="' + option.id + '"]');
+                                if (label && label.textContent.includes('New without tags')) {
+                                    console.log('Found radio option: New without tags');
+                                    option.click();
+                                    found = true;
+                                    break;
+                                }
+                            }
                         }
-                    }
+                        
+                        return found;
+                    `
+                });
+                
+                if (!scriptClick.success || scriptClick.result === false) {
+                    console.log('[ListingService] Failed to select "New without tags" condition');
                     
-                    // Try text-based continue button as last resort
-                    const textContinue = await tabCommunication.sendMessage(this.listingTabId, {
+                    // Continue anyway as this might be optional
+                    console.log('[ListingService] Continuing despite condition selection failure');
+                    
+                    // Try to continue without selecting condition
+                    const skipClick = await tabCommunication.sendMessage(this.listingTabId, {
                         action: 'clickElementText',
                         text: 'Continue',
                         timeout: 2000
                     });
                     
-                    if (textContinue.success) {
-                        console.log('[ListingService] Text-based continue button clicked');
+                    if (skipClick.success) {
+                        console.log('[ListingService] Clicked continue button without selecting condition');
                         this.nextWaitReload = true;
                         return { success: true };
                     }
                     
-                    // If we get here, we found the condition page but couldn't proceed
-                    // This could be acceptable in some flows, so return success
-                    console.log('[ListingService] Condition selected but could not find continue button. Proceeding anyway.');
-                    this.nextWaitReload = true;
-                    return { success: true };
-                    
-                } catch (error) {
-                    console.error('[ListingService] Error in selectConditionnew:', error);
-                    // Don't fail the entire listing process for this optional step
-                    return { success: true, warning: error.toString() };
+                    return { success: true }; // Continue anyway
                 }
             }
-        
-async selectCondition(productData){
-        this.nextWaitReload = false;
-        console.log("[ListingService] Looking for new condition popup..")
-        await new Promise(resolve => setTimeout(resolve, 8000));
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
-            action: 'detectElement',
-            selector:'.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
-        })
-        if(!response.success){
-            console.log("[ListingService] Condition popup not found. Continuing..")
-            return response;
+            
+            // Wait for selection to register
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Try multiple continue button approaches
+            const continueSelectors = [
+                '.prelist-radix__next-container .btn--primary',
+                'button:contains("Continue")',
+                '.action-button',
+                '.btn-continue',
+                '.next-button'
+            ];
+            
+            for (const selector of continueSelectors) {
+                console.log(`[ListingService] Trying to click continue with selector: ${selector}`);
+                const continueClick = await tabCommunication.sendMessage(this.listingTabId, {
+                    action: 'clickElement',
+                    selector: selector,
+                    timeout: 1000
+                });
+                
+                if (continueClick.success) {
+                    console.log('[ListingService] Continue button clicked successfully');
+                    this.nextWaitReload = true;
+                    return { success: true };
+                }
+            }
+            
+            // Try text-based continue button as last resort
+            const textContinue = await tabCommunication.sendMessage(this.listingTabId, {
+                action: 'clickElementText',
+                text: 'Continue',
+                timeout: 2000
+            });
+            
+            if (textContinue.success) {
+                console.log('[ListingService] Text-based continue button clicked');
+                this.nextWaitReload = true;
+                return { success: true };
+            }
+            
+            // If we get here, we found the condition page but couldn't proceed
+            // This could be acceptable in some flows, so return success
+            console.log('[ListingService] Condition selected but could not find continue button. Proceeding anyway.');
+            this.nextWaitReload = true;
+            return { success: true };
+            
+        } catch (error) {
+            console.error('[ListingService] Error in selectConditionnew:', error);
+            // Don't fail the entire listing process for this optional step
+            return { success: true, warning: error.toString() };
         }
-        console.log("[ListingService] Condition popup found. Selecting condition..")
-
-        const respOptionSelect = await tabCommunication.sendMessageRetries(this.listingTabId, {
-            action: 'selectOption',
-            selector:'.condition-picker-radix__radio-group',
-            text: 'New with box',
-            index: 0
-        })
-        if(!respOptionSelect.success){
-            return respOptionSelect;
-        }
-        console.log("[ListingService] Condition selected successfully.")
-        //continue listing button:
-        // const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
-        //     action :'clickElement',
-        //     selector:'#mainContent > div > div > div.prelist-radix__body-container > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.condition-dialog-non-block-radix__continue > button'
-        // })
-        const responseClick = await tabCommunication.sendMessage(this.listingTabId, {
-            action: 'clickElementText',
-            text:'Continue to listing'
-        })
-        if(!responseClick.success){
-            return responseClick;
-        }
-        console.log("[ListingService] Clicked on continue button.")
-        this.nextWaitReload = true;
-        return { success: true };
     }
-
+        
     async selectCondition(productData){
         this.nextWaitReload = false;
-        console.log("[ListingService] Looking for condition popup..")
-        await new Promise(resolve => setTimeout(resolve, 8000));
-        const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+        console.log("[ListingService] Looking for new condition popup..")
+        // await new Promise(resolve => setTimeout(resolve, 8000));
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'detectElement',
             selector:'.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active'
         })
@@ -521,9 +480,9 @@ async selectCondition(productData){
             console.log("[ListingService] Condition popup not found. Continuing..")
             return response;
         }
-
         console.log("[ListingService] Condition popup found. Selecting condition..")
-        const respOptionSelect = await tabCommunication.sendMessageRetries(this.listingTabId, {
+
+        const respOptionSelect = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'selectOption',
             selector:'.condition-picker-radix__radio-group',
             text: 'New with box',
@@ -546,11 +505,10 @@ async selectCondition(productData){
             return responseClick;
         }
         console.log("[ListingService] Clicked on continue button.")
-        this.nextWaitReload = true;
+        // this.nextWaitReload = true;
         return { success: true };
     }
-
-            
+  
     async selectCategory(productData){
         this.nextWaitReload = false;
         console.log("[ListingService] Looking for category popup:")
