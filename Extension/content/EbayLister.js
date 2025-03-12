@@ -464,6 +464,32 @@ export class EbayListingAutomator {
             await new Promise(resolve => setTimeout(resolve, 100));
 
         })
+            try {
+                
+                const sizeTypeList = document.querySelector('ul[aria-label="Size Type"]');
+                if (!sizeTypeList) {
+                    console.error('Size Type list not found.');
+                    return { success: false, error: 'Size Type list not found' };
+                }
+        
+                // Find the first button within the <ul> element
+                const firstButton = sizeTypeList.querySelector('button');
+                if (!firstButton) {
+                    console.error('No buttons found in the Size Type list.');
+                    return { success: false, error: 'No buttons found in the Size Type list' };
+                }
+        
+                
+                firstButton.click();
+                console.log('Clicked the first button in the Size Type list.');
+        
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+        
+                return { success: true };
+            } catch (error) {
+                console.error('Error clicking the first button in the Size Type list:', error);
+            }
 
 
         // Fill custom specifics
