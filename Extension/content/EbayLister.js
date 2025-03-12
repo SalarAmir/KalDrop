@@ -469,14 +469,16 @@ export class EbayListingAutomator {
                 const sizeTypeList = document.querySelector('ul[aria-label="Size Type"]');
                 if (!sizeTypeList) {
                     console.error('Size Type list not found.');
-                    return { success: false, error: 'Size Type list not found' };
+                    // return { success: false, error: 'Size Type list not found' };
+                    throw new Error('Size Type list not found');
                 }
         
                 // Find the first button within the <ul> element
                 const firstButton = sizeTypeList.querySelector('button');
                 if (!firstButton) {
                     console.error('No buttons found in the Size Type list.');
-                    return { success: false, error: 'No buttons found in the Size Type list' };
+                    // return { success: false, error: 'No buttons found in the Size Type list' };
+                    throw new Error('No buttons found in the Size Type list');
                 }
         
                 
@@ -496,7 +498,7 @@ export class EbayListingAutomator {
         for(const key in customSpecifics){
             console.log('Filling custom specific:', key, 'with value:', customSpecifics[key]);
             this.clickElementText({text: 'Add custom item specific'});
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 500));
             const nameInput = document.querySelector('#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-name-se-textbox');
             const valueInput = document.querySelector('#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-value-se-textbox');
             if(!nameInput || !valueInput){
@@ -505,16 +507,13 @@ export class EbayListingAutomator {
             }
             nameInput.value = key;
             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
-            nameInput.focus();
-            nameInput.click();
 
             valueInput.value = customSpecifics[key];
             valueInput.dispatchEvent(new Event('input', { bubbles: true }));
-            valueInput.focus();
-            valueInput.click();
 
+            await new Promise(resolve => setTimeout(resolve, 500));
             this.clickElementText({text: 'Save'});
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         return true;
