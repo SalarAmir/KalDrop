@@ -568,7 +568,7 @@ export class EbayListingAutomator {
         ).singleNodeValue;
         console.log('Pricing options button:', pricingOptionsButton);
         
-        const pricingLoaded = ()=>{
+        const pricingLoaded = async()=>{
             // const pricingContainer = this.findElement('summary__price-fields-container', 'class');
             // if(!pricingContainer){
             //     console.error('Pricing container not found');
@@ -580,10 +580,13 @@ export class EbayListingAutomator {
                 return;
             }
             console.log('Price input:', priceInput);
+            //wait 400ms:
+            await new Promise(resolve => setTimeout(resolve, 600));
             priceInput.value = requestData.price;
+            // console.log('Price input:', priceInput.value, requestData.price);
             // priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-            priceInput.focus();
-            priceInput.click();
+            // priceInput.focus();
+            // priceInput.click();
             const quantityInput = this.findElement('input[name="quantity"]');
             if(!quantityInput){
                 console.error('Quantity input not found');

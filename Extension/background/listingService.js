@@ -140,11 +140,11 @@ class ListingService{
             {func: this.selectCategory, name: 'selectCategory', type: "optional"},
             {func: this.selectConditionnew, name: 'selectConditionnew', type: "optional"},
             {func: this.selectCondition, name: 'selectCondition', type: "optional"},
-            {func: this.fillImages, name: 'fillImages', type: "required"},
+            // {func: this.fillImages, name: 'fillImages', type: "required"},
             {func: this.setPricing, name:'setPricing', type:'optional'},
-            {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
-            {func: this.setTemplate, name: 'setTemplate', type: "optional"},
-            {func: this.promotedListing, name: 'promotedListing', type: "optional"},
+            // {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
+            // {func: this.setTemplate, name: 'setTemplate', type: "optional"},
+            // {func: this.promotedListing, name: 'promotedListing', type: "optional"},
             {func: this.endListing, name: 'endListing', type: "required"},
         ];
     }
