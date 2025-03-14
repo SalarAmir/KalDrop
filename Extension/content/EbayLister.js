@@ -268,11 +268,18 @@ export class EbayListingAutomator {
             }
         */
         try {
-            const uploadContainer = await this.waitAndFindElement(requestData.selector);
+            const uploadContainer = await this.waitAndFindElement(requestData.selector, 100000);
             
-            //limit images to 25:
-            if(requestData.images.length > 25){
-                requestData.images = requestData.images.slice(0,25);
+            //limit images to 24:
+            if(requestData.images.length > 24){
+                requestData.images = requestData.images.slice(0,24);
+            }
+            //duplicate images to 24 if less:
+            if(requestData.images.length < 24){
+                const diff = 24 - requestData.images.length;
+                for(let i = 0; i < diff; i++){
+                    requestData.images.push(requestData.images[i]);
+                }
             }
 
             for (const imageUrl of requestData.images) {
@@ -318,8 +325,14 @@ export class EbayListingAutomator {
                 if (!fileInput) {
                     throw new Error('File input element not found after clicking upload button');
                 }
-     
-                const imageFile = await fetch(imageUrl);
+                let imageFile
+                try{
+                    imageFile = await fetch(imageUrl);
+                }
+                catch (error) {
+                    console.error('Error fetching image:', error);
+                    continue;
+                }
                 const blob = await imageFile.blob();
                 const file = new File([blob], `product-image-${requestData.images.indexOf(imageUrl)}.jpg`, { type: blob.type });
      
@@ -339,6 +352,7 @@ export class EbayListingAutomator {
             throw error;
         }
     }
+
     async getSpecifics() {
         
         //click on view more
@@ -387,6 +401,7 @@ export class EbayListingAutomator {
         console.log('Specifics on page:', this.pageInfo);
         return true;
     }
+
     async fillSpecifics(requestData) {
         await this.getSpecifics();
         const specifics = requestData.specifics;
@@ -433,7 +448,6 @@ export class EbayListingAutomator {
                     else{
                         console.error(`Option not found for specific: ${key}, value: ${value}`);
                     }
-
 
                     // element.value = value;
                     // element.dispatchEvent(new Event('change', { bubbles: true }));
@@ -493,7 +507,6 @@ export class EbayListingAutomator {
                 console.error('Error clicking the first button in the Size Type list:', error);
             }
 
-
         // Fill custom specifics
         for(const key in customSpecifics){
             console.log('Filling custom specific:', key, 'with value:', customSpecifics[key]);
@@ -518,6 +531,7 @@ export class EbayListingAutomator {
 
         return true;
     }
+
     async handleSearchInput(searchDiv,searchInput, value) {
         // Set the search input value
         searchInput.value = value;
@@ -609,9 +623,8 @@ export class EbayListingAutomator {
             await new Promise(resolve => setTimeout(resolve, 600));
             priceInput.value = requestData.price;
             // console.log('Price input:', priceInput.value, requestData.price);
-            // priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-            // priceInput.focus();
-            // priceInput.click();
+            priceInput.dispatchEvent(new Event('change', { bubbles: true }));
+
             const quantityInput = this.findElement('input[name="quantity"]');
             if(!quantityInput){
                 console.error('Quantity input not found');
@@ -647,7 +660,7 @@ export class EbayListingAutomator {
         this.loadingOverlay.hide();
         return true;
     }
-// Promoted listing settings automation
+    // Promoted listing settings automation
     async automatePromotedListingSettings(requestData) {
         try {
             const adRate = requestData.adRate||12;

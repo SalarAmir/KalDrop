@@ -15,28 +15,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Append the image to a container in popup.html
   document.getElementById('header').appendChild(imgElement);
   
-  const extractBtn = document.getElementById('extractBtn');
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   console.log('Active tab in pop:', tab);
-  if (tab.url.includes('aliexpress')) {
-    console.log('Aliexpress tab detected');
-    extractBtn.disabled = false;
-  }
+
   const optionsContainer = document.getElementById('optionsContainer');
   const listBtn = document.getElementById('listBtn');
   const advancedOptionsBtn = document.getElementById('advancedOptionsBtn');
   const dashboardBtn = document.getElementById('dashboardBtn');
   const status = document.getElementById('status');
-  const priceInput = document.getElementById('price');
+  const productList = document.getElementById('productList');
 
   let currentProductData = null;
 
-  // Show options section when Extract Product is clicked
-  extractBtn.addEventListener('click', async() => {
+  if (tab.url.includes('aliexpress')) {
+    console.log('Aliexpress tab detected');
     status.textContent = 'Extracting product data...';
     status.className = '';
-    
+
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' });
     console.log('response from content:', response);
     if (response.success) {
@@ -48,24 +43,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       advancedOptionsBtn.disabled = false;
       status.textContent = 'Product extracted successfully!';
       status.className = 'status--success';
-    }
-  });
 
-  // Send price to background script when Proceed with Listing is clicked
-  listBtn.addEventListener('click', async () => {
-    if (!priceInput.value) {
-      status.textContent = 'Price is required!';
+      // Display the product list
+      // productList.innerHTML = `<div>${response.data.name}</div>`; // Customize this as needed
+    } else {
+      status.textContent = 'Failed to extract product data.';
       status.className = 'status--error';
-      return;
     }
+  } else {
+    status.textContent = 'This is not an AliExpress page.';
+    status.className = 'status--error';
+  }
 
+  // Send product data to background script when Proceed with Listing is clicked
+  listBtn.addEventListener('click', async () => {
     try {
       status.textContent = 'Sending data to background...';
       status.className = '';
 
       await chrome.runtime.sendMessage({
         action: 'listProduct',
-        price: priceInput.value,
         productData: currentProductData,
       });
 
@@ -79,10 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Advanced Options button (placeholder for future functionality)
   advancedOptionsBtn.addEventListener('click', () => {
-    // status.textContent = 'Advanced options will be added later.';
-    // status.className = 'status--success';
     window.location.href = 'edit_product.html';
-
   });
 
   // Dashboard button

@@ -55,7 +55,6 @@ export class AliExpressScraper {
   getDescriptionImages() {
     document.querySelector("a.comet-v2-anchor-link.comet-v2-anchor-link-active").click();
 
-
     const container = document.querySelector('#product-description') || document.querySelector('.detail-desc-decorate-richtext');
     if (!container) {
       console.error('Description container  not found.');

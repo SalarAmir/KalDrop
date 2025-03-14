@@ -81,6 +81,7 @@ async function createListingService(request) {
         //template handling:
         const {template_settings:template} = await API.get('/template/selected-template');
         if(template && template.html_code){
+            
             for (let i = 0; i < prodToList.descriptionImages.length; i++) {
                 const imgUrl = prodToList.descriptionImages[i];
                 console.log("inserting img url", imgUrl, i+1);
