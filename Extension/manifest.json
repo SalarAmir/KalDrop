@@ -18,7 +18,7 @@
       "service_worker": "background.bundle.js"
     },
     "content_scripts": [{
-      "matches": [ "https://*.aliexpress.com/*",
+      "matches": [ "https://*.aliexpress.com/*", "https://*.aliexpress.us/*" ,
       "https://*.ebay.com/*",
       "http://*.localhost/*"],
       "js": ["content.bundle.js"]
@@ -26,9 +26,14 @@
     "action": {
       "default_popup": "popup/popup.html",
       "default_icon": {
-      "16": "assets/Vendra.png",
-      "48": "assets/Vendra.png",
-      "128": "assets/Vendra.png"
+        "16": "assets/Vendraext.png",
+        "24": "assets/Vendraext.png",
+        "32": "assets/Vendraext.png",
+        "48": "assets/Vendraext.png",
+        "64": "assets/Vendraext.png",
+        "96": "assets/Vendraext.png",
+        "128": "assets/Vendraext.png"
+      }
     }
     }
-  }
+  
