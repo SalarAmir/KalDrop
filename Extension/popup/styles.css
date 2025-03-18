@@ -19,6 +19,27 @@ body {
   color: var(--text-primary);
   margin: 0;
   line-height: 1.5;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Layout */
@@ -26,12 +47,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: calc(var(--spacing-unit) * 2);
+  animation: slideIn 0.5s ease-in-out;
 }
 
 /* Header */
 .header {
   text-align: center;
   margin-bottom: calc(var(--spacing-unit) * 2);
+  animation: slideIn 0.5s ease-in-out;
 }
 
 .header__title {
@@ -61,7 +84,7 @@ body {
 
 .btn:hover {
   background-color: var(--hover-color);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn:active {
@@ -112,6 +135,7 @@ body {
   flex-direction: column;
   gap: var(--spacing-unit);
   margin-bottom: calc(var(--spacing-unit) * 2);
+  animation: slideIn 0.5s ease-in-out;
 }
 
 .input-group label {
@@ -124,6 +148,17 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+#optionsContainer {
+  display: contents;
+  gap: var(--spacing-unit);
 }
 
 /* Status Messages */
@@ -132,6 +167,7 @@ body {
   padding: var(--spacing-unit);
   border-radius: 4px;
   text-align: center;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 .status--error {
@@ -149,6 +185,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: calc(var(--spacing-unit) * 2);
+  animation: slideIn 0.5s ease-in-out;
 }
 
 .form-group {
@@ -189,6 +226,7 @@ body {
   align-items: center;
   gap: var(--spacing-unit);
   background-color: var(--background-color);
+  animation: slideIn 0.5s ease-in-out;
 }
 
 .specification-item input,
