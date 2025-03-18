@@ -93,10 +93,14 @@ async function createListingService(request) {
 
             console.log('[createListingService] Template:', template);
             prodToList.template = template.html_code;
+
             
             // const {}
             console.log('[createListingService] Product to list:', prodToList);
         }
+        //item location
+
+        prodToList.itemLocation = uploader_settings.item_location;
         await currentListingService.startListingProcess(prodToList);
         console.log("[createListingService] Listing finished successfully.");
         currentListingService = undefined;
@@ -146,7 +150,9 @@ class ListingService{
             {func: this.fillItemSpecifics, name: 'fillItemSpecifics', type: "optional"},
             {func: this.setTemplate, name: 'setTemplate', type: "optional"},
             {func: this.promotedListing, name: 'promotedListing', type: "optional"},
+            {func: this.fillShipping, name: 'fillShipping', type: "optional"},
             {func: this.endListing, name: 'endListing', type: "required"},
+            
         ];
     }
 
@@ -613,6 +619,20 @@ class ListingService{
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'setPromotedListing',
             adRate: 15
+        });
+        if(!response.success){
+            return response;
+        }
+        return {success:true};
+    }
+
+    async fillShipping(productData){
+        this.nextWaitReload = false;
+        console.log('[ListingService] Setting shipping..')
+        const response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'fillShipping',
+            city: productData.itemLocation.city,
+            region: productData.itemLocation.region
         });
         if(!response.success){
             return response;

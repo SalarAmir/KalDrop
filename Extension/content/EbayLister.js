@@ -31,6 +31,7 @@ export class EbayListingAutomator {
             'fillPricing': this.fillPricing.bind(this),
             'setTemplate': this.setTemplate.bind(this),
             'setPromotedListing': this.automatePromotedListingSettings.bind(this),
+            'fillShipping': this.fillShipping.bind(this),
             'listingComplete': this.listingComplete.bind(this),
         };
         console.log('EbayListingAutomator initialized.');
@@ -706,7 +707,54 @@ export class EbayListingAutomator {
         return true;
     }
 
+    async fillShipping(requestData) {
+        /*
+            requestData:{
+                city:"",
+                region:"",
+            }
+        */
 
+        // click edit button
+        // list of found elements:
+        const editButtonFound = document.getElementsByClassName('summary__header-edit-button summary__header-edit-button--icon-only icon-btn');
+        if(editButtonFound.length > 0){
+            editButtonFound[0].click();
+        }
+        else{
+            console.error('Edit button not found');
+            return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const regionInput = await this.waitAndFindElement("//input[@name='itemLocationCountry']", 5000, 'xpath');
+        if(regionInput){
+            regionInput.value = requestData.region;
+            regionInput.dispatchEvent(new Event('blur', { bubbles: true }));
+            // regionInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        else{
+            console.error('Region input not found');
+        }
+
+        const cityInput = await this.waitAndFindElement("//input[@name='itemLocationCityState']", 5000, 'xpath');
+        if(cityInput){
+            cityInput.value = requestData.city;
+            cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+            cityInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        else{
+            console.error('City input not found');
+        }
+        const doneButton = await this.waitAndFindElement("//button[@_track='0.shippingSettings.2.Done']", 5000, 'xpath');
+        if(doneButton){
+            doneButton.click();
+        }
+        else{
+            console.error('Done button not found');
+        }
+
+        return true;
+    }
 
     // Utility methods
     findElement(selector, selectorType = 'query', context = document){
