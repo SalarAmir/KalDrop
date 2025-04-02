@@ -4,32 +4,42 @@ class Auth{
         this.subscribed = false;
     }
     async verifyAuth(){
-        const access_token = await chrome.storage.local.get('access_token');
-        if(!access_token){
+        try{
+            const {authState} = await chrome.storage.local.get('authState');
+            console.log('Auth state:', authState);
+            if(!authState || !authState.access_token){
+                console.log('No auth state found', authState);
+                this.authenticated = false;
+                this.redirectLogin();
+                return false;
+            }
+            
+            const currentTime = Math.floor(Date.now() / 1000);
+            if(authState.expires_at < currentTime){
+                console.log('Token expired');
+                this.authenticated = false;
+                this.redirectLogin();
+                return false;
+            }
+
+            //token is valid:
+            this.authenticated = true;
+            this.subscribed = authState.subscribed;
+            this.user = authState.user;
+
+            if(!this.subscribed){
+                console.log('User not subscribed');
+                this.redirectSubscription();
+                return false;
+            }
+            return true;
+        }
+        catch(error){
+            console.error('Error verifying auth:', error);
             this.authenticated = false;
             this.redirectLogin();
-            return this.authenticated;
+            return false;
         }
-        console.log('access_token:', access_token);
-        const response = await chrome.runtime.sendMessage({
-            action: 'verifyAuth'
-        });
-        console.log('verify auth response:', response);
-        if(!response.data.authenticated){
-            this.authenticated = false;
-            this.redirectLogin();
-            return this.authenticated;
-        }
-        this.authenticated = true;
-
-        if(!response.data.subscribed){
-            this.subscribed = false;
-            this.redirectSubscription();
-            return this.subscribed;
-        }
-        this.subscribed = true;
-
-        return this.authenticated;
     }
 
     redirectLogin(){
@@ -40,6 +50,7 @@ class Auth{
         window.location.href = 'popup_subscribe.html';
     }
 }
+console.log('Auth script loaded');
 export const auth = new Auth();
 (async () => {
     await auth.verifyAuth();

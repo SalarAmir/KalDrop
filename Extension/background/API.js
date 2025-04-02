@@ -4,7 +4,13 @@ export default class API {
 	static serverUrl = process.env.SERVER_URL;
 	// static serverUrl = 'http://localhost:5000/api/v1';
     static async createHeaders() {
-        const token = await StorageService.get('access_token');
+        const authState = await StorageService.get('authState');
+		// const {access_token:token} = await StorageService.get('authState');
+		if(!authState){
+			console.error('No auth state found.');
+			throw new Error('No auth state found.');
+		}
+		const {access_token:token} = authState;
         if (!token) {
             console.error('No token found.');
             throw new Error('No token found.');
@@ -23,7 +29,7 @@ export default class API {
             const data = await response.json();
             if(data.statusCode === 401){
                 console.error('Unauthorized. Clearing auth token.');
-                await StorageService.remove('access_token');
+                // await StorageService.remove('access_token');
             }
             console.error('API Error:', data);
             throw new Error(data.error);

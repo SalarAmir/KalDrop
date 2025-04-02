@@ -24,76 +24,139 @@ class Auth{
             console.error('[Auth] FRONTEND_DOMAIN:', this.frontendDomain);
             console.error('[Auth] AUTH_COOKIE_NAME:', this.authCookieName);
         }
-        this.access_token = null
-        this.logged_in = false
-        this.subscribed = false
+        this.authState = {
+            access_token: null,
+            expires_at: null,
+            user: null,
+            subscribed: false
+        };
 
-        this.initAuth().then(async () => {
-            await this.verifyToken();
+        this.initAuth().then(() => {
+            this.setupCookieListener();
         })
         
     }
     async initAuth(){
-        const cookies = await chrome.cookies.getAll({
-            name:this.authCookieName,
-            domain:this.frontendDomain
-        });
-        if(cookies.length === 0){
-            console.log('[initAuth] No auth cookie found.');
+
+        const storedAuth = await StorageService.get('authState');
+        if(storedAuth){
+            this.authState = storedAuth;
+            await this.checkSubscription();
+            await StorageService.set('authState', this.authState);
+            console.log('[initAuth] Stored auth state:', this.authState);
             return;
         }
 
-        //convert to json obj:
-        const authObj = JSON.parse(decodeURIComponent(cookies[0].value));
-        console.log('[initAuth] Auth cookie found:', authObj);
-        // const authObj = decodeURIComponent(cookies[0].value);
-        const {access_token} = authObj;
-        console.log('[initAuth] Logged in user found:',authObj.user.email);
-        await StorageService.set('access_token', access_token);
-        this.access_token = access_token;
+        await this.checkCookie();
         
     }
 
-    async verifyToken(request=null){
-        const response = await API.get('/verify');
-        const subscriptionResponse = await API.get('/user-subscription');
-        const subscribed = subscriptionResponse.status === "active";
-        console.log('[verifyToken] Response:', response);
-        if(response.message !== "Authenticated"){
-            console.error('[verifyToken] Unauthorized. Clearing auth token.');
-            await StorageService.remove('access_token');
-            return {authenticated:false, subscribed};
-        }
-        return {authenticated:true, subscribed};
+    async checkCookie(){
+        const cookies = await chrome.cookies.getAll({
+            name: this.authCookieName,
+            domain: this.frontendDomain
+        });
 
-    }
-
-    //callback:
-    async cookieChanged(changeInfo){
-        if(changeInfo.cookie.domain !== this.frontendDomain) return;
-        if(changeInfo.cookie.name !== this.authCookieName) return;
-        if(changeInfo.removed){
-            console.log('[onCookieChanged] Auth cookie removed. Clearing local storage.');
-            await StorageService.remove('access_token');
+        if (cookies.length === 0) {
+            console.log('[checkCookie] No auth cookie found');
+            await this.clearAuth();
             return;
         }
-    
-        const {access_token:cookieToken} = JSON.parse(decodeURIComponent(changeInfo.cookie.value));
-        const currentToken = await StorageService.get('access_token');
-        // const umm = await supabase.auth.getUser(cookieToken);
-        if(!currentToken){
-            console.log('[onCookieChanged] No current token found. Setting local storage.');
-            await StorageService.set('access_token', cookieToken);
+
+        const cookie = cookies[0];
+        await this.processCookie(cookie);
+    }
+
+    async processCookie(cookie){
+        try{
+            const authObj = JSON.parse(decodeURIComponent(cookie.value));
+            const {access_token, expires_at, user} = authObj;
+
+            if(!access_token || !expires_at || !user){
+                throw new Error('Invalid auth cookie format');
+            }
+
+            this.authState = {
+                access_token,
+                expires_at,
+                user,
+                subscribed: this.authState.subscribed
+            }
+            await StorageService.set('authState', this.authState);
+            await this.checkSubscription();
+            await StorageService.set('authState', this.authState);
         }
-        if(currentToken !== cookieToken){
-            console.log('[onCookieChanged] Token changed. Updating local storage.');
-            await StorageService.set('access_token', cookieToken);
+        catch(error){
+            console.error('[processCookie] Error processing cookie:', error);
+            await this.clearAuth();
         }
+    }
+
+    async checkSubscription() {
+        try {
+            const subscriptionResponse = await API.get('/user-subscription');
+            this.authState.subscribed = subscriptionResponse.status === "active";
+            // await StorageService.set('authState', this.authState);
+        } catch (error) {
+            console.error('[checkSubscription] Error checking subscription:', error);
+            // Don't clear auth on subscription check failure
+        }
+    }
+
+    async clearAuth() {
+        this.authState = {
+            access_token: null,
+            expires_at: null,
+            user: null,
+            subscribed: false
+        };
+        await StorageService.remove('authState');
+        console.log('[clearAuth] Cleared auth state');
+    }
+
+    setupCookieListener() {
+        chrome.cookies.onChanged.addListener((changeInfo) => {
+            if (changeInfo.cookie.domain !== this.frontendDomain) return;
+            if (changeInfo.cookie.name !== this.authCookieName) return;
+
+            if (changeInfo.removed) {
+                console.log('[cookieListener] Auth cookie removed');
+                this.clearAuth();
+            } else {
+                console.log('[cookieListener] Auth cookie changed');
+                this.processCookie(changeInfo.cookie);
+            }
+        });
+    }
+
+    isTokenValid() {
+        if (!this.authState.expires_at) return false;
+        const now = Math.floor(Date.now() / 1000);
+        return this.authState.expires_at > now;
+    }
+
+    async verifyToken(request=null){
+        if(this.isTokenValid()){
+            return {
+                authenticated: true,
+                subscribed: this.authState.subscribed,
+            }
+        }
+        
+        return {
+            authenticated: false,
+            subscribed: false,
+        }
+    }
+
+    async getAuthState(){
+        return {
+            success: true,
+            ...this.authState
+        };
     }
 }
 const auth = new Auth();
-// auth.initAuth();
-chrome.cookies.onChanged.addListener((changeInfo)=>auth.cookieChanged(changeInfo));
 
 // Communication services:
 
@@ -107,6 +170,7 @@ const actionToServiceMap = {
     'saveProduct': saveProductService,
     'verifyAuth': (request) => auth.verifyToken(request),
     'contentLoaded': (request) => tabCommunication.handleReload(request),
+    'getAuthState': (request) => auth.getAuthState(),
 };
 
 // Debugging helper to log all available actions
