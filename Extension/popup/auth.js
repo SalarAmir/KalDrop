@@ -23,6 +23,7 @@ class Auth{
             }
 
             //token is valid:
+            console.log('Token valid');
             this.authenticated = true;
             this.subscribed = authState.subscribed;
             this.user = authState.user;
@@ -51,7 +52,13 @@ class Auth{
     }
 }
 console.log('Auth script loaded');
-export const auth = new Auth();
-(async () => {
+const auth = new Auth();
+const initAuth = async () => {
     await auth.verifyAuth();
-})();
+}
+
+
+// (async () => {
+//     await auth.verifyAuth();
+// })();
+export { auth,initAuth }; 

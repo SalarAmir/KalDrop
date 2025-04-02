@@ -1,7 +1,15 @@
-import './auth.js';
+// import './auth.js';
 import logo from '../assets/Vendra.png';
+import {auth, initAuth } from './auth.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+
+async function initPopup() {
+  if (!auth.authenticated || !auth.subscribed) {
+    // console.log('User not authenticated, redirecting to login');
+    // window.location.href = 'popup_login.html';
+    return;
+  }
+  
   console.log('Popup loaded');
 
   const imgElement = document.createElement('img');
@@ -85,4 +93,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       url: process.env.DASHBOARD_URL + '/login'
     });
   });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initAuth();
+  await initPopup();
 });
