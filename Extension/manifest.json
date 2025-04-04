@@ -12,7 +12,7 @@
     "host_permissions": [
       "https://*.aliexpress.com/*",
       "https://*.ebay.com/*",
-      "http://*.localhost/*"
+      "https://*.vendraa-dashboard.vercel.app/*"
     ],
     "background": {
       "service_worker": "background.bundle.js"
