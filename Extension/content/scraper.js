@@ -98,7 +98,7 @@ export class AliExpressScraper {
 
   async getImages() {
     //get slider buttons:
-    const sliderElements = document.querySelectorAll('.slider--item--FefNjlj img');
+    const sliderElements = document.querySelectorAll('[class*="slider--item"] img');
     if (!sliderElements) console.error('Slider elements not found');
     const images = [];
     for (const sliderElement of sliderElements) {
@@ -109,7 +109,7 @@ export class AliExpressScraper {
       });
       sliderElement.dispatchEvent(moveoverEvent);
       await new Promise(resolve => setTimeout(resolve, 300));
-      const [imageElement] = document.getElementsByClassName('magnifier--image--EYYoSlr');
+      const [imageElement] = document.querySelectorAll('[class*="magnifier--image"] img');
       if (!imageElement) {
         console.error('Image element not found');
         continue;
