@@ -109,7 +109,7 @@ export class AliExpressScraper {
       });
       sliderElement.dispatchEvent(moveoverEvent);
       await new Promise(resolve => setTimeout(resolve, 300));
-      const [imageElement] = document.querySelectorAll('[class*="magnifier--image"] img');
+      const [imageElement] = document.getElementsByClassName('magnifier--image--EYYoSlr');
       if (!imageElement) {
         console.error('Image element not found');
         continue;
