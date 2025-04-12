@@ -270,18 +270,6 @@ export class EbayListingAutomator {
         */
         try {
             const uploadContainer = await this.waitAndFindElement(requestData.selector, 100000);
-            
-            //limit images to 24:
-            if(requestData.images.length > 24){
-                requestData.images = requestData.images.slice(0,24);
-            }
-            //duplicate images to 24 if less:
-            if(requestData.images.length < 24){
-                const diff = 24 - requestData.images.length;
-                for(let i = 0; i < diff; i++){
-                    requestData.images.push(requestData.images[i]);
-                }
-            }
 
             for (const imageUrl of requestData.images) {
                 const uploadButton = uploadContainer.querySelector('button');

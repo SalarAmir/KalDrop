@@ -58,6 +58,19 @@ async function createListingService(request) {
         //uploader settings handling
         const uploader_settings = await API.get('/uploader-settings');
 
+        //limit images to 24:
+        if(prodToList.images.length > 24){
+            prodToList.images = prodToList.images.slice(0,24);
+        }
+        // if(uploader_settings.duplicate_max_photos){
+            //duplicate images to 24 if less:
+        if(prodToList.images.length < 24){
+            const diff = 24 - prodToList.images.length;
+            for(let i = 0; i < diff; i++){
+                prodToList.images.push(prodToList.images[i]);
+            }
+        }
+
         if(uploader_settings.fixed_item_specifics == true){
             console.log('[createListingService] fixed_item_specifcs set to true');
             const uploaderSpecsObj = uploader_settings.item_specifics.reduce((acc, item) => {
@@ -65,7 +78,6 @@ async function createListingService(request) {
                 acc[key] = item[key];
                 return acc;
             }, {});
-
 
             // console.log('[createListingService] specifics from db:', uploader_settings.item_specifics);
             prodToList.specifics = {...prodToList.specifications, ...uploaderSpecsObj};
