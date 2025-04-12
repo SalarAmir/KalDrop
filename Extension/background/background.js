@@ -41,14 +41,14 @@ class Auth{
         const storedAuth = await StorageService.get('authState');
         if(storedAuth){
             this.authState = storedAuth;
-            await this.checkSubscription();
-            await StorageService.set('authState', this.authState);
-            console.log('[initAuth] Stored auth state:', this.authState);
-            return;
+            if(this.isTokenValid()){
+                await this.checkSubscription();
+                await StorageService.set('authState', this.authState);
+                console.log('[initAuth] Stored auth state:', this.authState);
+                return;
+            }
         }
-
         await this.checkCookie();
-        
     }
 
     async checkCookie(){
@@ -81,6 +81,10 @@ class Auth{
                 expires_at,
                 user,
                 subscribed: this.authState.subscribed
+            }
+
+            if(!this.isTokenValid()){
+                throw new Error('Token expired');
             }
             await StorageService.set('authState', this.authState);
             await this.checkSubscription();
