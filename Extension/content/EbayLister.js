@@ -11,7 +11,6 @@ export class EbayListingAutomator {
                         type
                     }
                 }
-
                 types: search, text
             */
             specifics:{}
@@ -61,7 +60,6 @@ export class EbayListingAutomator {
             }
             return true;
         }
-
         return false;
     }
 
@@ -265,12 +263,40 @@ export class EbayListingAutomator {
         /*
             requestData: {
                 selector: "",
-                images: []
+                images: [],
+                addBorder: bool
             }
         */
+
+        async function addBorderToImage(blob){
+            return new Promise((resolve)=>{
+                const img = new Image();
+                const url = URL.createObjectURL(blob);
+
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const borderW = 50;
+                    canvas.width = img.width + borderW * 2;
+                    canvas.height = img.height + borderW * 2;
+
+                    ctx.fillStyle = '#ff0000'; // Border color
+                    ctx.fillRect(0, 0, canvas.width, canvas.height); // Draw border
+
+                    ctx.drawImage(img, borderW, borderW, img.width, img.height); // Draw image
+
+                    canvas.toBlob((newBlob) => {
+                        URL.revokeObjectURL(url);
+                        resolve(newBlob);
+                    }, blob.type||'image/jpeg');
+                }
+                img.src = url;
+            })
+        }
         try {
             const uploadContainer = await this.waitAndFindElement(requestData.selector, 100000);
-
+            let firstImage = requestData.addBorder;
             for (const imageUrl of requestData.images) {
                 const uploadButton = uploadContainer.querySelector('button');
                 if (!uploadButton) {
@@ -322,7 +348,13 @@ export class EbayListingAutomator {
                     console.error('Error fetching image:', error);
                     continue;
                 }
-                const blob = await imageFile.blob();
+                let blob = await imageFile.blob();
+
+                if(firstImage){
+                    blob = await addBorderToImage(blob);
+                    firstImage = false;
+                }
+
                 const file = new File([blob], `product-image-${requestData.images.indexOf(imageUrl)}.jpg`, { type: blob.type });
      
                 const dataTransfer = new DataTransfer();
@@ -332,7 +364,7 @@ export class EbayListingAutomator {
                 fileInput.dispatchEvent(new Event('change', { bubbles: true }));
                 fileInput.dispatchEvent(new Event('input', { bubbles: true }));
      
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 400));
             }
      
             return true;
@@ -358,7 +390,7 @@ export class EbayListingAutomator {
         for (let i = 0; i < specificLabelElements.length; i++) {
             const text = specificLabelElements[i].innerText;
             const key = text.split('\n')[0];
-            let inputElement = specificsInputs[i].querySelector('input') || 
+            let inputElement =  specificsInputs[i].querySelector('input') || 
                                 specificsInputs[i].querySelector('select') ||
                                 specificsInputs[i].querySelector('textArea');
             // console.log('Specific:', key, 'Element:', inputElement);

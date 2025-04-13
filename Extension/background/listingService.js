@@ -58,6 +58,8 @@ async function createListingService(request) {
         //uploader settings handling
         const uploader_settings = await API.get('/uploader-settings');
 
+        prodToList.add_border_to_main_image = !!uploader_settings.add_border_to_main_image;
+
         //limit images to 24:
         if(prodToList.images.length > 24){
             prodToList.images = prodToList.images.slice(0,24);
@@ -131,17 +133,8 @@ class ListingService{
     
     /*
     productData:{
-        "title":"",
-        "description": "",
-        "price": ,
-        "images": [],
-        "categoryId": "",
-        "listingOptions": {
-            "requireImmediatePayment": true,
-            "quantity": 5,
-            "allowOffers": true
-            }
-            }
+       
+        }
             */
 
     constructor() {
@@ -163,8 +156,7 @@ class ListingService{
             {func: this.setTemplate, name: 'setTemplate', type: "optional"},
             {func: this.promotedListing, name: 'promotedListing', type: "optional"},
             {func: this.fillShipping, name: 'fillShipping', type: "optional"},
-            {func: this.endListing, name: 'endListing', type: "required"},
-            
+            {func: this.endListing, name: 'endListing', type: "required"},  
         ];
     }
 
@@ -559,6 +551,7 @@ class ListingService{
             action: 'uploadImages',
             selector:'#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__photos.summary__photos-image-guidance.summary__photos--photo-framework > div:nth-child(2) > div > div.uploader-ui.empty > div:nth-child(1) > div.uploader-thumbnails-ux.uploader-thumbnails-ux--inline.uploader-thumbnails-ux--inline-edit > div',
             images: productData.images,
+            addBorder: productData.add_border_to_main_image,
         });
         if(!response.success){
             return response;
