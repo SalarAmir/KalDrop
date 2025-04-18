@@ -221,23 +221,51 @@ class ListingService{
         }
     }
 
-    async clickListButton(productData){
+    async clickListButton(productData) {
         this.nextWaitReload = false;
         console.log('[ListingService] Clicking list button:', productData.title);
-        const response = await tabCommunication.sendMessage(this.listingTabId, {
-            action: 'clickElement',
-            selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+    
+        const originalSelector = '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a';
+        const fallbackSelector = '#listings-content-target > div.fl-title-bar > div.fl-title-bar__section2 > div:nth-child(2) > div > a';
+    
+        // Wait for page to be fully interactive (better than timeout)
+        console.log('[ListingService] Waiting for page to be interactive');
+        const loadResponse = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'waitForPageInteractive'
         });
-        // const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
-        //     action: 'clickElement',
-        //     selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
-        // });
-        if(!response.success){
+    
+        if (!loadResponse.success) {
+            console.error('[ListingService] Page interactivity check failed:', loadResponse);
+            return { success: false, error: 'Page not interactive' };
+        }
+        console.log('[ListingService] Page is interactive');
+    
+        // Try original selector
+        let response = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'clickElement',
+            selector: originalSelector,
+        });
+    
+        // If original selector fails, try fallback selector immediately
+        if (!response.success) {
+            console.log('[ListingService] Original selector failed, trying fallback selector:', fallbackSelector);
+            response = await tabCommunication.sendMessage(this.listingTabId, {
+                action: 'clickElement',
+                selector: fallbackSelector,
+            });
+        }
+    
+        if (!response.success) {
+            console.error('[ListingService] Failed to click list button with both selectors:', response);
             return response;
         }
+    
         this.nextWaitReload = true;
-
-        console.log('[ListingService] List button clicked successfully:', response);
+        console.log('[ListingService] List button clicked successfully with selector:', response.selector || originalSelector);
+        // Log current URL to debug navigation
+        const urlResponse = await tabCommunication.sendMessage(this.listingTabId, { action: 'getCurrentUrl' });
+        console.log('[ListingService] Current URL after click, waiting for reload:', urlResponse.url);
+    
         return { success: true };
     }
     
