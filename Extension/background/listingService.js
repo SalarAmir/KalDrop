@@ -177,7 +177,7 @@ class ListingService{
         // console.log('[ListingService] Started with product data:', productData);
         
         const newTab = await chrome.tabs.create({
-            url: 'https://www.ebay.com/sell/create',
+            url: 'https://ebay.com/sl/sell',
             active: true,
         });
         console.log('[ListingService] New tab created with ID:', newTab.id);
