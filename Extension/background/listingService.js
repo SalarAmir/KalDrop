@@ -177,7 +177,7 @@ class ListingService{
         // console.log('[ListingService] Started with product data:', productData);
         
         const newTab = await chrome.tabs.create({
-            url: 'https://ebay.com/sl/sell',
+            url: 'https://ebay.com/sh/lst/active',
             active: true,
         });
         console.log('[ListingService] New tab created with ID:', newTab.id);
@@ -221,13 +221,35 @@ class ListingService{
         }
     }
 
+    // async clickListButton(productData){
+    //     this.nextWaitReload = false;
+    //     console.log('[ListingService] Clicking list button:', productData.title);
+    //     const response = await tabCommunication.sendMessage(this.listingTabId, {
+    //         action: 'clickElement',
+    //         selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+    //     });
+        
+    //     // const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
+    //     //     action: 'clickElement',
+    //     //     selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+    //     // });
+    //     if(!response.success){
+    //         return response;
+    //     }
+    //     this.nextWaitReload = true;
+
+    //     console.log('[ListingService] List button clicked successfully:', response);
+    //     return { success: true };
+    // }
+
     async clickListButton(productData){
         this.nextWaitReload = false;
         console.log('[ListingService] Clicking list button:', productData.title);
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'clickElement',
-            selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
+            selector: '#listings-content-target > div.fl-title-bar > div.fl-title-bar__section2 > div:nth-child(2) > div > a',
         });
+        
         // const response = await tabCommunication.sendMessageRetries(this.listingTabId, {
         //     action: 'clickElement',
         //     selector: '#mainContent > div.container__content > div.menu > div > nav > ul > li.header-links__item-button > a',
