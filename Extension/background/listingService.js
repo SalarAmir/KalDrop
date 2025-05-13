@@ -180,6 +180,7 @@ class ListingService{
             url: 'https://ebay.com/sh/lst/active',
             active: true,
         });
+        console.log("New updated version running")
         console.log('[ListingService] New tab created with ID:', newTab.id);
         this.listingTabId = newTab.id;
         await tabCommunication.waitForReload();
@@ -245,6 +246,7 @@ class ListingService{
     async clickListButton(productData){
         this.nextWaitReload = false;
         console.log('[ListingService] Clicking list button:', productData.title);
+        console.log("New updated version running")
         const response = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'clickElement',
             selector: '#listings-content-target > div.fl-title-bar > div.fl-title-bar__section2 > div:nth-child(2) > div > a',
@@ -263,45 +265,189 @@ class ListingService{
         return { success: true };
     }
     
-    async fillTitle(productData){
-        this.nextWaitReload = false;
-        console.log('[ListingService] Filling title:', productData.title);
-        console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
-        const response = await tabCommunication.sendMessage(this.listingTabId, {
-            action: 'fillValue',
-            selector:'#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
-            value: productData.title,
-        });
-        if(!response.success){
-            return response;
+    // async fillTitle(productData){
+    //     this.nextWaitReload = false;
+    //     console.log('[ListingService] Filling title:', productData.title);
+    //     console.log('[ListingService] Sending message to tab ID:', this.listingTabId);
+    //     const response = await tabCommunication.sendMessage(this.listingTabId, {
+    //         action: 'fillValue',
+    //         // #s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox
+    //         selector:'#s0-1-1-19-7-\@keyword-\@keywords-search-box-\@keywords-box-\@input-textbox',
+    //         value: productData.title,
+    //     });
+    //     if(!response.success){
+    //         return response;
+    //     }
+    //     console.log('[ListingService] Title filled successfully:', response);
+    //     const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+    //         action: 'clickElement',
+    //         // #mainContent > div > div > div.keyword-suggestion > button
+    //         selector:'#mainContent > div > div > div.keyword-suggestion > button',
+    //     });
+    //     if(!responseClick.success){
+    //         return responseClick;
+    //     }
+    //     console.log('[ListingService] Clicked on suggested title:', responseClick);
+    //     this.nextWaitReload = true;
+    //     return { success: true };
+    // }
+
+    // async similarProducts(productData){
+    //     this.nextWaitReload = false;
+    //     console.log('[ListingService] Looking for similar products..')
+    //     const response = await tabCommunication.sendMessage(this.listingTabId, {
+    //         action: 'clickElementText',
+    //         text: 'Continue without match'
+    //     });
+    //     if(!response.success){
+    //         return response;
+    //     }
+    //     console.log('[ListingService] Clicked on continue without match:', response);
+    //     // this.nextWaitReload = true;
+    //     return { success: true };
+    // }
+
+   async fillTitle(productData) {
+    this.nextWaitReload = false;
+    console.log('[ListingService] Starting title fill process for:', productData.title);
+
+    const titleSelectors = [
+        '#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
+        '#s0-1-1-19-7-\\@keyword-\\@keywords-search-box-\\@keywords-box-\\@input-textbox',
+        'input[id*="keyword"][id*="input-textbox"]',
+        'input[data-testid*="search-box"]',
+        'input[aria-label*="keyword" i]',
+        'input[type="text"][name*="keyword"]',
+        '.search-box-input',
+        'input:text',
+        'input[placeholder*="title" i]',
+        'input:not([disabled])'
+    ];
+
+    const MAX_TITLE_ATTEMPTS = 5;
+    let RETRY_DELAY = 1500;
+    let titleFilled = false;
+
+    try {
+        for (let attempt = 1; attempt <= MAX_TITLE_ATTEMPTS; attempt++) {
+            console.log(`[ListingService] Title fill attempt ${attempt}/${MAX_TITLE_ATTEMPTS}`);
+
+            for (const selector of titleSelectors) {
+                console.log(`[ListingService] Trying selector: "${selector}"`);
+
+                const fillResponse = await tabCommunication.sendMessage(this.listingTabId, {
+                    action: 'fillValue',
+                    selector,
+                    value: productData.title,
+                    checkVisible: true,
+                    waitFor: 5000,
+                    retries: 3,
+                    timeout: 7000
+                });
+
+                if (fillResponse.success) {
+                    console.log(`[ListingService] ✅ Filled input with selector: "${selector}"`);
+                    await new Promise(res => setTimeout(res, 500));
+
+                    const eventResponse = await tabCommunication.sendMessage(this.listingTabId, {
+                        action: 'fullInputSimulation',
+                        selector,
+                        value: productData.title
+                    });
+
+                    if (eventResponse.success) {
+                        titleFilled = true;
+                        break;
+                    }
+                }
+
+                if (titleFilled) break;
+            }
+
+            if (titleFilled) break;
+
+            if (attempt < MAX_TITLE_ATTEMPTS) {
+                console.log(`[ListingService] ⏳ Retrying in ${RETRY_DELAY}ms...`);
+                await new Promise(res => setTimeout(res, RETRY_DELAY));
+                RETRY_DELAY *= 1.5;
+            }
         }
-        console.log('[ListingService] Title filled successfully:', response);
-        const responseClick = await tabCommunication.sendMessageRetries(this.listingTabId, {
+    } catch (error) {
+        console.error('[ListingService] ❌ Title input failed:', error);
+        throw new ElementNotFoundError('Title input not found due to error: ' + error.message);
+    }
+
+    if (!titleFilled) {
+        console.error('[ListingService] ❌ Could not fill title input after all attempts');
+        throw new ElementNotFoundError('Title input not found');
+    }
+
+    console.log('[ListingService] ✅ Title filled, checking for suggestion button...');
+
+    // Try broader, general selectors for the button
+    const buttonSelectors = [
+        '#mainContent > div > div > div.keyword-suggestion > button',
+        '#mainContent button.keyword-suggestion',
+        'button[class*="suggestion"]',
+        'button:has-text("Use suggested title")',
+        'button'
+    ];
+
+    for (const selector of buttonSelectors) {
+        console.log(`[ListingService] 🧪 Trying to click selector: ${selector}`);
+        const responseClick = await tabCommunication.sendMessage(this.listingTabId, {
             action: 'clickElement',
-            selector:'#mainContent > div > div > div.keyword-suggestion > button',
+            selector,
+            waitFor: 2000,
+            retries: 2
         });
-        if(!responseClick.success){
-            return responseClick;
+
+        if (responseClick.success) {
+            console.log(`[ListingService] ✅ Clicked suggested title button with selector: ${selector}`);
+            this.nextWaitReload = true;
+            return { success: true };
         }
-        console.log('[ListingService] Clicked on suggested title:', responseClick);
+    }
+
+    // Final fallback — try text-based match
+    console.warn('[ListingService] ❌ Button selector failed. Trying text match...');
+    const fallbackResponse = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'clickElementText',
+        text: 'Use suggested title'
+    });
+
+    if (fallbackResponse.success) {
+        console.log('[ListingService] ✅ Clicked suggested title via text');
         this.nextWaitReload = true;
         return { success: true };
     }
 
-    async similarProducts(productData){
-        this.nextWaitReload = false;
-        console.log('[ListingService] Looking for similar products..')
-        const response = await tabCommunication.sendMessage(this.listingTabId, {
-            action: 'clickElementText',
-            text: 'Continue without match'
-        });
-        if(!response.success){
-            return response;
-        }
-        console.log('[ListingService] Clicked on continue without match:', response);
-        // this.nextWaitReload = true;
-        return { success: true };
+    // If still not clickable, fallback to similar products
+    console.error('[ListingService] ❌ All attempts failed. Falling back...');
+    return await this.similarProducts(productData);
+}
+
+async similarProducts(productData) {
+    this.nextWaitReload = false;
+    console.log('[ListingService] Looking for similar products...');
+
+    const response = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'clickElementText',
+        text: 'Continue without match',
+        waitFor: 3000,
+        retries: 2
+    });
+
+    if (!response.success) {
+        console.error('[ListingService] ❌ Could not click "Continue without match"', response);
+        return response;
     }
+
+    console.log('[ListingService] ✅ Clicked "Continue without match"');
+    return { success: true };
+}
+
+
 
             // Function to click the "New without tags" button
             //  async selectConditionnew() {
