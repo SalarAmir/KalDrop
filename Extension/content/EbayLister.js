@@ -1,4 +1,116 @@
 //automator v0.2
+const SELECTORS = {
+    // General Listing Flow
+    LIST_NEW_ITEM_BUTTON: '#listings-content-target > div.fl-title-bar > div.fl-title-bar__section2 > div:nth-child(2) > div > a',
+    TITLE_INPUT_SELECTORS: [ // Array of selectors for the title input
+        'input[id*="title-field"]', // More generic title input
+        '#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
+        '#s0-1-1-19-7-\\@keyword-\\@keywords-search-box-\\@keywords-box-\\@input-textbox',
+        'input[id*="keyword"][id*="input-textbox"]',
+        'input[data-testid*="search-box"]',
+        'input[aria-label*="keyword" i]',
+        'input[type="text"][name*="keyword"]',
+        '.search-box-input input[type="text"]', // More specific search box input
+        '#inpTitle', // Common ID for title
+    ],
+    TITLE_SUGGESTION_BUTTON_CONTAINER: '#mainContent > div > div > div.keyword-suggestion',
+    TITLE_SUGGESTION_BUTTON: '#mainContent > div > div > div.keyword-suggestion > button',
+    CONTINUE_WITHOUT_MATCH_TEXT: 'Continue without match',
+     // --- START: New Selector Key ---
+    SIMILAR_PRODUCTS_CONTINUE_BUTTON: '#mainContent > div > div > div.prelist-radix__next-container > button',
+    // --- END: New Selector Key ---
+    // Condition Selection (New Flow)
+    CONDITION_PAGE_DETECTORS: [
+        '.prelist-radix__body-container.prelist-radix__condition-grading',
+        '.condition-button-list',
+        '.condition-picker-radix',
+        'div[data-testid="condition-selector"]'
+        // 'button:contains("New without tags")' // This is more of a text search, handle separately
+    ],
+    CONDITION_NEW_WITHOUT_TAGS_BUTTON_SELECTOR: '#mainContent > div > div > div.prelist-radix__body-container.prelist-radix__condition-grading > div > div > div > div.condition-grading-type__content > ul > li:nth-child(2) > button',
+    // Specific selector for the "Continue" button on this page
+    CONDITION_CONTINUE_BUTTON_SELECTOR: '#mainContent > div > div > div.prelist-radix__next-container > button',
+    // Specific selector for the "New without tags" text
+    CONDITION_NEW_WITHOUT_TAGS_TEXT: 'New without tags',
+    CONDITION_CONTINUE_BUTTON_TEXT: 'Continue',
+
+    // Condition Selection (Old/Popup Flow)
+    CONDITION_POPUP_SELECTOR: '.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active',
+    CONDITION_PICKER_RADIO_GROUP: '.condition-picker-radix__radio-group',
+    CONDITION_NEW_WITH_BOX_TEXT: 'New with box',
+    CONTINUE_TO_LISTING_BUTTON_TEXT: 'Continue to listing',
+
+    // Category Selection
+    CATEGORY_POPUP_SELECTOR: '#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker',
+    CATEGORY_SUGGESTED_ITEM: '#mainContent > div > div > div.prelist-radix__body-container > div.aspects-category-radix > div.category-picker-radix__sidepane > div > div > div.lightbox-dialog__window.lightbox-dialog__window--animate.keyboard-trap--active > div.lightbox-dialog__main > div > div > div.category-picker > div > div.se-panel-container__body > div > div.se-panel-section.category-picker__suggested-section > div:nth-child(2) > button',
+
+    // Images
+    IMAGES_UPLOAD_CONTAINER: '#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__photos.summary__photos-image-guidance.summary__photos--photo-framework > div:nth-child(2) > div > div.uploader-ui.empty > div:nth-child(1) > div.uploader-thumbnails-ux.uploader-thumbnails-ux--inline.uploader-thumbnails-ux--inline-edit > div',
+    IMAGE_FILE_INPUT: 'input[type="file"]',
+
+    // Item Specifics
+    ITEM_SPECIFICS_VIEW_MORE_BUTTON: '#mainContent > div > div > div.main__container--form > div.summary__container > div.smry.summary__attributes > div.summary__attributes--container > button',
+    ITEM_SPECIFICS_LABEL_CLASS: 'summary__attributes--label',
+    ITEM_SPECIFICS_VALUE_CLASS: 'summary__attributes--value',
+    ITEM_SPECIFICS_ADD_CUSTOM_TEXT: 'Add custom item specific',
+    ITEM_SPECIFICS_CUSTOM_NAME_INPUT_SELECTORS: [ // Array for custom name input
+        '#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-name-se-textbox', // Example, might be dynamic
+        'input[name="customAttributeName"]',
+        'input[data-testid="custom-attribute-name"]',
+        '#custom-specific-name-input' // Generic fallback
+    ],
+    ITEM_SPECIFICS_CUSTOM_VALUE_INPUT_SELECTORS: [ // Array for custom value input
+        '#s0-0-0-24-8-11-0-0-dialog-11-2-7-2-0-17-8-custom-attribute-value-se-textbox', // Example, might be dynamic
+        'input[name="customAttributeValue"]',
+        'input[data-testid="custom-attribute-value"]',
+        '#custom-specific-value-input' // Generic fallback
+    ],
+    ITEM_SPECIFICS_SAVE_BUTTON_TEXT: 'Save',
+    ITEM_SPECIFICS_SIZE_TYPE_LIST: 'ul[aria-label="Size Type"]',
+    ITEM_SPECIFICS_REQUIRED_SECTION: ".summary__attributes--section-container",
+
+
+    // Description Template
+    TEMPLATE_SHOW_HTML_BUTTON: 'input[name="descriptionEditorMode"][value="html"]',
+    TEMPLATE_HTML_INPUT_BOX_SELECTORS: [ // Array for HTML input box
+        'textarea.se-rte__button-group-editor__html',
+        '#wc0-w0-LIST_EDITOR_DESCRIPTION_EDITOR textarea', // A common pattern for rich text editors
+        'textarea[data-testid="html-editor-textarea"]'
+    ],
+
+    // Pricing
+    PRICING_FORMAT_DROPDOWN_BUTTON: '.listbox-button button[aria-haspopup="listbox"]',
+    PRICING_BUY_IT_NOW_OPTION_TEXT: 'Buy It Now',
+    PRICING_SEE_OPTIONS_BUTTON_TEXT: 'See pricing options',
+    PRICING_PRICE_INPUT_SELECTORS: [ // Array for price input
+        'input[name="price"]',
+        'input[id*="priceBase"]',
+        'input[data-testid="price-input"]',
+        '#priceSugg', // Example
+        '#binPrice'
+    ],
+    PRICING_QUANTITY_INPUT_SELECTORS: [ // Array for quantity input
+        'input[name="quantity"]',
+        'input[id*="quantityBase"]',
+        'input[data-testid="quantity-input"]',
+        '#qtyInput'
+    ],
+
+    // Promoted Listings
+    PROMOTED_GENERAL_TOGGLE: '.fai-program-wrapper:first-child .switch__control',
+    PROMOTED_AD_RATE_INPUT_SELECTORS: [ // Array for ad rate input
+        'input[name="adRate"]',
+        'input[data-testid="adRateInput"]',
+        '#adRateInput'
+    ],
+
+    // Shipping
+    SHIPPING_EDIT_BUTTON: '.summary__header-edit-button.summary__header-edit-button--icon-only.icon-btn',
+    SHIPPING_REGION_INPUT_XPATH: "//input[@name='itemLocationCountry']", // XPath selectors are single strings
+    SHIPPING_CITY_INPUT_XPATH: "//input[@name='itemLocationCityState']",
+    SHIPPING_DONE_BUTTON_XPATH: "//button[@_track='0.shippingSettings.2.Done']",
+};
+
 export class EbayListingAutomator {
     constructor(loadingOverlay) {
         this.pageInfo = {
@@ -22,6 +134,7 @@ export class EbayListingAutomator {
             'navigateToPage': this.navigateToPage.bind(this),
             'fillValue': this.fillValue.bind(this),
             'detectElement':this.detectElement.bind(this),
+            'handleConditionSelectionNew': this.handleConditionSelectionNew.bind(this),
             'selectOption': this.selectOption.bind(this),
             'uploadImages': this.uploadImages.bind(this),
             'getSpecifics': this.getSpecifics.bind(this),
@@ -64,47 +177,69 @@ export class EbayListingAutomator {
     }
 
     async clickElement(requestData) {
-        /*
-            requestData: {
-                selector: ""
-            }
-        */
-        const element = await this.waitAndFindElement(requestData.selector);
-        if (!element) {
-            throw new Error(`Element not found: ${request.selector}`);
+        console.log(`[EbayLister.clickElement] Attempting to click element with key "${requestData.selectorKey}" or selector "${requestData.selector}"`);
+        let selector = SELECTORS[requestData.selectorKey] || requestData.selector;
+        if (!selector) {
+            throw new Error(`Selector key "${requestData.selectorKey}" not found and no direct selector provided.`);
         }
-        element.click();
-        return true;
+
+        // If selector is an array, try each one until success
+        if (Array.isArray(selector)) {
+            for (const sel of selector) {
+                try {
+                    const element = await this.waitAndFindElement(sel, requestData.timeout, requestData.selectorType || 'query');
+                    if (element) {
+                        console.log(`[EbayLister.clickElement] Element found with selector: "${sel}". Clicking.`);
+                        element.click();
+                        return { success: true };
+                    }
+                } catch (error) {
+                    console.warn(`[EbayLister.clickElement] Failed to click element with selector "${sel}": ${error.message}. Trying next...`);
+                }
+            }
+            throw new Error(`Element not found after trying all selectors for key: ${requestData.selectorKey}`);
+        } else {
+            // Single selector logic
+            const element = await this.waitAndFindElement(selector, requestData.timeout, requestData.selectorType || 'query');
+            if (!element) {
+                throw new Error(`Element not found with selector: ${selector}`);
+            }
+            console.log(`[EbayLister.clickElement] Element found with selector: "${selector}". Clicking.`);
+            element.click();
+            return { success: true };
+        }
     }
 
     async clickElementText(requestData) {
-        /*
-            requestData: {
-                text: ""
-            }
-        */
-        const elements = document.querySelectorAll('*');
-        let targetElement;
-        let found = false;
+        console.log(`[EbayLister.clickElementText] Attempting to click element with text key "${requestData.textKey}" or text "${requestData.text}"`);
+        const textToFind = SELECTORS[requestData.textKey] || requestData.text;
+        if (!textToFind) {
+            throw new Error(`Text key "${requestData.textKey}" not found and no direct text provided.`);
+        }
+        console.log(`[EbayLister.clickElementText] Searching for text: "${textToFind}"`);
+
+        const elements = document.querySelectorAll('button, a, span, div, li, h1, h2, h3, p'); // Common interactive or text-holding elements
+        let targetElement = null;
+
         for (const element of elements) {
-            if (element.textContent.trim() === requestData.text.trim()) {
-                // console.log('Element found with text:', element);
-                found = true;
-                targetElement = element;
-                if(found){
-                    console.warn('Multiple elements found with the same text', requestData.text);
+            // Check if element is visible and has text content
+            if (element.offsetParent !== null && element.textContent) {
+                if (element.textContent.trim().includes(textToFind.trim())) {
+                    targetElement = element;
+                    console.log(`[EbayLister.clickElementText] Found matching element:`, targetElement);
+                    break;
                 }
-                targetElement.click();
-                // break;
             }
         }
 
         if (!targetElement) {
-            throw new Error(`Element not found with text: ${requestData.text}`);
+            const errorMessage = `[EbayLister.clickElementText] Element not found with text: "${textToFind}"`;
+            console.error(errorMessage);
+            throw new Error(errorMessage);
         }
         targetElement.click();
-
-        return true;
+        console.log(`[EbayLister.clickElementText] Successfully clicked element with text: "${textToFind}"`);
+        return { success: true };
     }
 
     async findText(requestData) {
@@ -124,22 +259,40 @@ export class EbayListingAutomator {
         return true;
     }
 
-    async fillValue(requestData) {
-        /*
-            requestData: {
-                value: "",
-                selector: ""
-            }
-        */
-        console.log('Filling value:', requestData.value, 'in element:', requestData.selector);
-        const element = await this.waitAndFindElement(requestData.selector);
-        if (!element) {
-            throw new Error(`Element not found: ${requestData.selector}`);
-        }
-        element.value = requestData.value;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        return true;
+    // In EbayLister.js
+async fillValue(requestData) {
+    const { value, selectorKey, selector: directSelector, timeout, selectorType = 'query' } = requestData;
+    console.log(`[EbayLister.fillValue] Attempting to fill value for key "<span class="math-inline">\{selectorKey\}" or direct selector "</span>{directSelector}"`);
+
+    let selectorsToTry = [];
+    if (selectorKey && SELECTORS[selectorKey]) {
+        const selEntry = SELECTORS[selectorKey];
+        selectorsToTry = Array.isArray(selEntry) ? selEntry : [selEntry];
+    } else if (directSelector) {
+        selectorsToTry = [directSelector]; // Fallback to direct selector if key not found or provided
+    } else {
+        throw new Error(`No selectorKey or direct selector provided for fillValue action.`);
     }
+
+    for (const sel of selectorsToTry) {
+        try {
+            // Use the timeout from requestData if provided, otherwise default in waitAndFindElement
+            const element = await this.waitAndFindElement(sel, timeout, selectorType);
+            if (element) {
+                console.log(`[EbayLister.fillValue] Element found with selector: "${sel}". Filling value.`);
+                element.value = value;
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+                // element.dispatchEvent(new Event('blur', { bubbles: true })); // Consider if blur is always needed
+                return { success: true, usedSelector: sel }; // Return success and the selector that worked
+            }
+        } catch (error) {
+            console.warn(`[EbayLister.fillValue] Failed to find/fill element with selector "${sel}": ${error.message}. Trying next...`);
+        }
+    }
+    // If loop completes without returning, no selector worked
+    throw new Error(`Element not found or action failed after trying all selectors for key: ${selectorKey || 'N/A'} / direct: ${directSelector || 'N/A'}`);
+}
 
     async detectElement(requestData){
         /*
@@ -803,8 +956,7 @@ export class EbayListingAutomator {
         }
         return element;
     }
-    /* 
-    async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
+    /* async waitAndFindElement(selector, timeout = 20000, selectorType = 'query', context = document) {
         console.log('Waiting for element:', selector);
     
         return new Promise((resolve, reject) => {
@@ -910,6 +1062,79 @@ export class EbayListingAutomator {
         });
  
     }
+async handleConditionSelectionNew(requestData) {
+        console.log('[EbayLister.handleConditionSelectionNew] Processing new condition selection flow...');
 
-    
+        // 1. Detect if the specific condition selection UI is present
+        let pageUiDetected = false;
+        const detectors = SELECTORS.CONDITION_PAGE_DETECTORS || []; // Ensure detectors is an array
+        for (const detector of detectors) {
+            try {
+                if (await this.waitAndFindElement(detector, 1000)) {
+                    console.log(`[EbayLister.handleConditionSelectionNew] Condition UI detected with: ${detector}`);
+                    pageUiDetected = true;
+                    break;
+                }
+            } catch (e) { /* Selector not found, try next */ }
+        }
+
+        if (!pageUiDetected) {
+            console.log('[EbayLister.handleConditionSelectionNew] Relevant condition selection UI not detected. Skipping step.');
+            return { success: true, skipped: true, message: 'Condition selection UI not found, skipped.' };
+        }
+
+        // 2. Attempt to select "New without tags" using the specific selector
+        let conditionClicked = false;
+        try {
+            if (!SELECTORS.CONDITION_NEW_WITHOUT_TAGS_BUTTON_SELECTOR) {
+                throw new Error("CONDITION_NEW_WITHOUT_TAGS_BUTTON_SELECTOR is not defined in SELECTORS.");
+            }
+            await this.clickElement({ selector: SELECTORS.CONDITION_NEW_WITHOUT_TAGS_BUTTON_SELECTOR, timeout: 3000 });
+            console.log('[EbayLister.handleConditionSelectionNew] "New without tags" option clicked using specific selector.');
+            conditionClicked = true;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause for UI to react
+        } catch (error) {
+            console.warn(`[EbayLister.handleConditionSelectionNew] Could not click "New without tags" using specific selector: ${error.message}. Attempting text fallback.`);
+            // Fallback to text-based click if specific selector fails
+            try {
+                await this.clickElementText({ textKey: 'CONDITION_NEW_WITHOUT_TAGS_TEXT', timeout: 2000 });
+                console.log('[EbayLister.handleConditionSelectionNew] "New without tags" option clicked using text fallback.');
+                conditionClicked = true;
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (textError) {
+                console.warn(`[EbayLister.handleConditionSelectionNew] Text fallback for "New without tags" also failed: ${textError.message}. Will attempt to continue.`);
+            }
+        }
+
+        // 3. Attempt to click the "Continue" button using the specific selector
+        try {
+            if (!SELECTORS.CONDITION_CONTINUE_BUTTON_SELECTOR) {
+                throw new Error("CONDITION_CONTINUE_BUTTON_SELECTOR is not defined in SELECTORS.");
+            }
+            await this.clickElement({ selector: SELECTORS.CONDITION_CONTINUE_BUTTON_SELECTOR, timeout: 3000 });
+            console.log('[EbayLister.handleConditionSelectionNew] "Continue" button clicked using specific selector.');
+            return { success: true, message: 'Condition flow handled, "Continue" clicked via specific selector.' };
+        } catch (error) {
+            console.warn(`[EbayLister.handleConditionSelectionNew] Could not click "Continue" button using specific selector: ${error.message}. Attempting text fallback.`);
+            // Fallback to text-based click for "Continue"
+            try {
+                await this.clickElementText({ textKey: 'CONDITION_CONTINUE_BUTTON_TEXT', timeout: 2000 });
+                console.log('[EbayLister.handleConditionSelectionNew] "Continue" button clicked using text fallback.');
+                return { success: true, message: 'Condition flow handled, "Continue" clicked via text fallback.' };
+            } catch (textError) {
+                const errorMessage = `[EbayLister.handleConditionSelectionNew] Failed to click "Continue" button using specific selector and text fallback: ${textError.message}`;
+                console.error(errorMessage);
+                // If the condition was definitely clicked, but "Continue" failed, this is an issue.
+                if (conditionClicked) {
+                    throw new Error(errorMessage + " (Condition was selected but could not continue)");
+                } else {
+                    // If condition wasn't clicked and continue also failed, still problematic if UI was detected.
+                    console.warn('[EbayLister.handleConditionSelectionNew] Neither condition nor continue button could be reliably actioned, though UI was present.');
+                    // Depending on strictness, you might throw or return a soft failure/skip.
+                    // For now, let's indicate a failure to proceed with this step.
+                    throw new Error(errorMessage + " (Could not complete condition step)");
+                }
+            }
+        }
+    }
 }

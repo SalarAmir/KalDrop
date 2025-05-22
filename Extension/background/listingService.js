@@ -307,146 +307,99 @@ class ListingService{
     //     return { success: true };
     // }
 
-   async fillTitle(productData) {
-    this.nextWaitReload = false;
-    console.log('[ListingService] Starting title fill process for:', productData.title);
+   // In ListingService.js - fillTitle method
+async fillTitle(productData) {
+    this.nextWaitReload = false; // Keep this if still relevant for the overall step
+    console.log('[ListingService] Instructing content script to fill title:', productData.title);
 
-    const titleSelectors = [
-        '#s0-1-1-24-7-\\@keyword-\\@box-\\@input-textbox',
-        '#s0-1-1-19-7-\\@keyword-\\@keywords-search-box-\\@keywords-box-\\@input-textbox',
-        'input[id*="keyword"][id*="input-textbox"]',
-        'input[data-testid*="search-box"]',
-        'input[aria-label*="keyword" i]',
-        'input[type="text"][name*="keyword"]',
-        '.search-box-input',
-        'input:text',
-        'input[placeholder*="title" i]',
-        'input:not([disabled])'
-    ];
-
-    const MAX_TITLE_ATTEMPTS = 5;
-    let RETRY_DELAY = 1500;
-    let titleFilled = false;
-
-    try {
-        for (let attempt = 1; attempt <= MAX_TITLE_ATTEMPTS; attempt++) {
-            console.log(`[ListingService] Title fill attempt ${attempt}/${MAX_TITLE_ATTEMPTS}`);
-
-            for (const selector of titleSelectors) {
-                console.log(`[ListingService] Trying selector: "${selector}"`);
-
-                const fillResponse = await tabCommunication.sendMessage(this.listingTabId, {
-                    action: 'fillValue',
-                    selector,
-                    value: productData.title,
-                    checkVisible: true,
-                    waitFor: 5000,
-                    retries: 3,
-                    timeout: 7000
-                });
-
-                if (fillResponse.success) {
-                    console.log(`[ListingService] ✅ Filled input with selector: "${selector}"`);
-                    await new Promise(res => setTimeout(res, 500));
-
-                    const eventResponse = await tabCommunication.sendMessage(this.listingTabId, {
-                        action: 'fullInputSimulation',
-                        selector,
-                        value: productData.title
-                    });
-
-                    if (eventResponse.success) {
-                        titleFilled = true;
-                        break;
-                    }
-                }
-
-                if (titleFilled) break;
-            }
-
-            if (titleFilled) break;
-
-            if (attempt < MAX_TITLE_ATTEMPTS) {
-                console.log(`[ListingService] ⏳ Retrying in ${RETRY_DELAY}ms...`);
-                await new Promise(res => setTimeout(res, RETRY_DELAY));
-                RETRY_DELAY *= 1.5;
-            }
-        }
-    } catch (error) {
-        console.error('[ListingService] ❌ Title input failed:', error);
-        throw new ElementNotFoundError('Title input not found due to error: ' + error.message);
-    }
-
-    if (!titleFilled) {
-        console.error('[ListingService] ❌ Could not fill title input after all attempts');
-        throw new ElementNotFoundError('Title input not found');
-    }
-
-    console.log('[ListingService] ✅ Title filled, checking for suggestion button...');
-
-    // Try broader, general selectors for the button
-    const buttonSelectors = [
-        '#mainContent > div > div > div.keyword-suggestion > button',
-        '#mainContent button.keyword-suggestion',
-        'button[class*="suggestion"]',
-        'button:has-text("Use suggested title")',
-        'button'
-    ];
-
-    for (const selector of buttonSelectors) {
-        console.log(`[ListingService] 🧪 Trying to click selector: ${selector}`);
-        const responseClick = await tabCommunication.sendMessage(this.listingTabId, {
-            action: 'clickElement',
-            selector,
-            waitFor: 2000,
-            retries: 2
-        });
-
-        if (responseClick.success) {
-            console.log(`[ListingService] ✅ Clicked suggested title button with selector: ${selector}`);
-            this.nextWaitReload = true;
-            return { success: true };
-        }
-    }
-
-    // Final fallback — try text-based match
-    console.warn('[ListingService] ❌ Button selector failed. Trying text match...');
-    const fallbackResponse = await tabCommunication.sendMessage(this.listingTabId, {
-        action: 'clickElementText',
-        text: 'Use suggested title'
+    // Send a single message with a selectorKey
+    const fillResponse = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'fillValue', // Or a more specific action like 'fillElementByKey'
+        selectorKey: 'TITLE_INPUT_SELECTORS', // Key from EbayLister.js's SELECTORS
+        value: productData.title,
+        // You can also pass parameters for waitAndFindElement if needed, e.g.,
+        // timeout: 7000,
+        // checkVisible: true,
     });
 
-    if (fallbackResponse.success) {
-        console.log('[ListingService] ✅ Clicked suggested title via text');
+    if (!fillResponse.success) {
+        console.error('[ListingService] Failed to fill title via content script:', fillResponse.error);
+        throw new Error(`Action fillTitle (via content script) failed: ${fillResponse.error}`);
+    }
+
+    console.log('[ListingService] Title fill instruction sent. Now attempting to click suggestion button.');
+
+    // Click suggestion button (can also use a selectorKey)
+    const clickSuggestionResponse = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'clickElement', // Uses EbayLister's clickElement
+        selectorKey: 'TITLE_SUGGESTION_BUTTON', // Key from EbayLister.js's SELECTORS
+        // Alternatively, could be a textKey if TITLE_SUGGESTION_BUTTON is text-based
+        // action: 'clickElementText',
+        // textKey: 'SOME_TEXT_KEY_FOR_SUGGESTION_BUTTON'
+        timeout: 2000, // Optional: override default timeout in EbayLister
+        // retries: 2    // Optional: override default retries
+    });
+
+    if (clickSuggestionResponse.success) {
+        console.log('[ListingService] Clicked suggested title button successfully.');
         this.nextWaitReload = true;
-        return { success: true };
+    } else {
+        // If TITLE_SUGGESTION_BUTTON fails, try CONTINUE_WITHOUT_MATCH_TEXT as a fallback
+        console.warn('[ListingService] Failed to click suggestion button, trying "Continue without match".');
+        const continueResponse = await tabCommunication.sendMessage(this.listingTabId, {
+            action: 'clickElementText',
+            textKey: 'CONTINUE_WITHOUT_MATCH_TEXT',
+        });
+        if (!continueResponse.success) {
+             console.error('[ListingService] Failed to click "Continue without match":', continueResponse.error);
+             // Decide if this is a critical failure
+        } else {
+            this.nextWaitReload = false; // Or true, depending on page flow after this click
+        }
     }
-
-    // If still not clickable, fallback to similar products
-    console.error('[ListingService] ❌ All attempts failed. Falling back...');
-    return await this.similarProducts(productData);
-}
-
-async similarProducts(productData) {
-    this.nextWaitReload = false;
-    console.log('[ListingService] Looking for similar products...');
-
-    const response = await tabCommunication.sendMessage(this.listingTabId, {
-        action: 'clickElementText',
-        text: 'Continue without match',
-        waitFor: 3000,
-        retries: 2
-    });
-
-    if (!response.success) {
-        console.error('[ListingService] ❌ Could not click "Continue without match"', response);
-        return response;
-    }
-
-    console.log('[ListingService] ✅ Clicked "Continue without match"');
     return { success: true };
 }
 
+
+async similarProducts(productData) {
+    this.nextWaitReload = false;
+    console.log('[ListingService] Instructing content script to click the continue button for similar products...');
+
+    const response = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'clickElement', // Changed from 'clickElementText'
+        selectorKey: 'SIMILAR_PRODUCTS_CONTINUE_BUTTON', // Use the new selectorKey
+        // Optional: Pass timeout or retries if you want to override defaults in EbayLister.js
+        // waitFor: 3000, // Example: if this button takes time to appear
+        // retries: 2
+    });
+
+    if (!response.success) {
+        console.error('[ListingService] ❌ Could not click "Continue" button for similar products using selectorKey:', response.error ? response.error.toString() : 'Unknown error');
+        // You might want to add a fallback to the text-based click if this selector fails,
+        // or if the selector is not always present but the text "Continue without match" is.
+        // Example Fallback:
+        // console.log('[ListingService] Trying fallback: clicking "Continue without match" by text.');
+        // const fallbackResponse = await tabCommunication.sendMessage(this.listingTabId, {
+        //     action: 'clickElementText',
+        //     textKey: 'CONTINUE_WITHOUT_MATCH_TEXT',
+        //     waitFor: 1000,
+        // });
+        // if (!fallbackResponse.success) {
+        //     console.error('[ListingService] ❌ Fallback text-based click also failed:', fallbackResponse.error);
+        //     return fallbackResponse; // Or return the original failed response
+        // }
+        // console.log('[ListingService] ✅ Fallback text-based click successful.');
+        // this.nextWaitReload = true; // if navigation happens
+        // return { success: true };
+        return response; // Return the original failed response for now
+    }
+
+    console.log('[ListingService] ✅ "Continue" button for similar products instruction processed successfully by content script using selector.');
+    // Determine if a page reload/navigation is expected after this action.
+    // If clicking this button reliably loads a new page or a significantly different section:
+    // this.nextWaitReload = true; 
+    return { success: true };
+}
 
 
             // Function to click the "New without tags" button
@@ -487,168 +440,32 @@ async similarProducts(productData) {
             //     return { true: true };
             // }
     async selectConditionnew(productData) {
-        this.nextWaitReload = false;
-        console.log('[ListingService] Checking for condition selection page...');
-        
-        try {
-            // Allow page to fully load
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // Try multiple selectors to detect the condition page
-            const pageSelectors = [
-                '.prelist-radix__body-container.prelist-radix__condition-grading',
-                '.condition-button-list',
-                '.condition-picker-radix',
-                'button:contains("New without tags")',
-                'div[data-testid="condition-selector"]'
-            ];
-            
-            let pageFound = false;
-            for (const selector of pageSelectors) {
-                console.log(`[ListingService] Trying to detect condition page with selector: ${selector}`);
-                const check = await tabCommunication.sendMessage(this.listingTabId, {
-                    action: 'detectElement',
-                    selector: selector,
-                    timeout: 1000 // Short timeout for each attempt
-                });
-                
-                if (check.success) {
-                    console.log(`[ListingService] Condition page detected with selector: ${selector}`);
-                    pageFound = true;
-                    break;
-                }
-            }
-            
-            if (!pageFound) {
-                console.log('[ListingService] Condition selection page not found. Skipping...');
-                return { success: true }; // Skip if not found
-            }
-            
-            // Try multiple approaches to select condition
-            console.log('[ListingService] Trying different methods to select "New without tags"');
-            
-            // Method 1: Direct click on button with text
-            const directClick = await tabCommunication.sendMessage(this.listingTabId, {
-                action: 'clickElementText',
-                text: 'New without tags',
-                timeout: 2000
-            });
-            
-            if (!directClick.success) {
-                console.log('[ListingService] Direct click failed, trying script method');
-                
-                // Method 2: Execute script to find and click based on text content
-                const scriptClick = await tabCommunication.sendMessage(this.listingTabId, {
-                    action: 'executeScript',
-                    script: `
-                        // Try multiple selector patterns
-                        let found = false;
-                        
-                        // Try condition buttons
-                        const buttons = document.querySelectorAll('button, .condition-button, [role="button"]');
-                        for (const button of buttons) {
-                            if (button.textContent && button.textContent.includes('New without tags')) {
-                                console.log('Found button with text: New without tags');
-                                button.click();
-                                found = true;
-                                break;
-                            }
-                        }
-                        
-                        // Try radio buttons or options
-                        if (!found) {
-                            const options = document.querySelectorAll('input[type="radio"], .radio-input');
-                            for (const option of options) {
-                                const label = option.closest('label') || 
-                                                document.querySelector('label[for="' + option.id + '"]');
-                                if (label && label.textContent.includes('New without tags')) {
-                                    console.log('Found radio option: New without tags');
-                                    option.click();
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        return found;
-                    `
-                });
-                
-                if (!scriptClick.success || scriptClick.result === false) {
-                    console.log('[ListingService] Failed to select "New without tags" condition');
-                    
-                    // Continue anyway as this might be optional
-                    console.log('[ListingService] Continuing despite condition selection failure');
-                    
-                    // Try to continue without selecting condition
-                    const skipClick = await tabCommunication.sendMessage(this.listingTabId, {
-                        action: 'clickElementText',
-                        text: 'Continue',
-                        timeout: 2000
-                    });
-                    
-                    if (skipClick.success) {
-                        console.log('[ListingService] Clicked continue button without selecting condition');
-                        this.nextWaitReload = true;
-                        return { success: true };
-                    }
-                    
-                    return { success: true }; // Continue anyway
-                }
-            }
-            
-            // Wait for selection to register
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Try multiple continue button approaches
-            const continueSelectors = [
-                '.prelist-radix__next-container .btn--primary',
-                'button:contains("Continue")',
-                '.action-button',
-                '.btn-continue',
-                '.next-button'
-            ];
-            
-            for (const selector of continueSelectors) {
-                console.log(`[ListingService] Trying to click continue with selector: ${selector}`);
-                const continueClick = await tabCommunication.sendMessage(this.listingTabId, {
-                    action: 'clickElement',
-                    selector: selector,
-                    timeout: 1000
-                });
-                
-                if (continueClick.success) {
-                    console.log('[ListingService] Continue button clicked successfully');
-                    this.nextWaitReload = true;
-                    return { success: true };
-                }
-            }
-            
-            // Try text-based continue button as last resort
-            const textContinue = await tabCommunication.sendMessage(this.listingTabId, {
-                action: 'clickElementText',
-                text: 'Continue',
-                timeout: 2000
-            });
-            
-            if (textContinue.success) {
-                console.log('[ListingService] Text-based continue button clicked');
-                this.nextWaitReload = true;
-                return { success: true };
-            }
-            
-            // If we get here, we found the condition page but couldn't proceed
-            // This could be acceptable in some flows, so return success
-            console.log('[ListingService] Condition selected but could not find continue button. Proceeding anyway.');
-            this.nextWaitReload = true;
+    this.nextWaitReload = false;
+    console.log('[ListingService] Instructing content script to handle "new" condition selection page...');
+    await new Promise(resolve => setTimeout(resolve, 500)); // Short delay
+
+    const response = await tabCommunication.sendMessage(this.listingTabId, {
+        action: 'handleConditionSelectionNew',
+    });
+
+    if (!response.success) {
+        if (response.skipped) {
+            console.log(`[ListingService] 'handleConditionSelectionNew' was skipped by content script: ${response.message}. This is acceptable.`);
             return { success: true };
-            
-        } catch (error) {
-            console.error('[ListingService] Error in selectConditionnew:', error);
-            // Don't fail the entire listing process for this optional step
-            return { success: true, warning: error.toString() };
+        } else {
+            console.warn(`[ListingService] Content script reported an issue with 'handleConditionSelectionNew': ${response.error || response.message}. Treating as optional and proceeding.`);
+            // If this step becomes truly critical, you might want to throw an error here based on response.error
+            // For now, let's assume it's optional if it reaches this point without throwing in EbayLister.
+            return { success: true, warning: response.error || response.message };
         }
     }
+
+    console.log(`[ListingService] 'handleConditionSelectionNew' action processed: ${response.message}`);
+    if (!response.skipped) {
+        this.nextWaitReload = true;
+    }
+    return { success: true };
+}
         
     async selectCondition(productData){
         this.nextWaitReload = false;
